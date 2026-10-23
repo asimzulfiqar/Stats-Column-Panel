@@ -259,5 +259,50 @@ export const plugin = new PanelPlugin<StatsColumnOptions>(StatsColumnPanel).setP
         ],
       },
     })
+    .addRadio({
+      path: 'allColumnsHiddenBehavior',
+      name: 'When all columns are hidden',
+      category: ['Empty State'],
+      description: 'Choose what happens when all columns are hidden by visibility rules (e.g. variables or field values).',
+      defaultValue: 'alert',
+      settings: {
+        options: [
+          { value: 'alert', label: 'Default alert message' },
+          { value: 'hide', label: 'Hide panel completely (remove panel)' },
+          { value: 'custom', label: 'Custom message' },
+        ],
+      },
+    })
+    .addTextInput({
+      path: 'allColumnsHiddenTitle',
+      name: 'Custom title',
+      category: ['Empty State'],
+      description: 'Custom title when all columns are hidden (supports variables like $device).',
+      defaultValue: 'No data available',
+      showIf: (opts: StatsColumnOptions) => opts.allColumnsHiddenBehavior === 'custom',
+    })
+    .addTextInput({
+      path: 'allColumnsHiddenMessage',
+      name: 'Custom description / message',
+      category: ['Empty State'],
+      description: 'Custom message text displayed when all columns are hidden (supports variables).',
+      defaultValue: 'All columns are currently hidden.',
+      showIf: (opts: StatsColumnOptions) => opts.allColumnsHiddenBehavior === 'custom',
+    })
+    .addRadio({
+      path: 'allColumnsHiddenSeverity',
+      name: 'Message display style',
+      category: ['Empty State'],
+      description: 'Display style for custom message.',
+      defaultValue: 'info',
+      settings: {
+        options: [
+          { value: 'info', label: 'Info alert box' },
+          { value: 'warning', label: 'Warning alert box' },
+          { value: 'plain', label: 'Plain subtle text' },
+        ],
+      },
+      showIf: (opts: StatsColumnOptions) => opts.allColumnsHiddenBehavior === 'custom',
+    })
 );
 

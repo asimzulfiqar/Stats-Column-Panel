@@ -129,6 +129,8 @@ export interface StatsColumnDefinition {
   visibility?: VisibilityRule;
 }
 
+export type AllColumnsHiddenBehavior = 'hide' | 'custom' | 'alert';
+
 export interface StatsColumnOptions {
   numberFormat: NumberFormatStyle;
   defaultCalculation: StatCalculation;
@@ -155,5 +157,9 @@ export interface StatsColumnOptions {
   cardRadius: 'small' | 'medium' | 'large';
   enableInteractiveResize?: boolean;
   autoScaleFontSize?: boolean;
+  allColumnsHiddenBehavior?: AllColumnsHiddenBehavior;
+  allColumnsHiddenTitle?: string;
+  allColumnsHiddenMessage?: string;
+  allColumnsHiddenSeverity?: 'info' | 'warning' | 'plain';
   columns: StatsColumnDefinition[];
 }

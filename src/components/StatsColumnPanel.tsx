@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { css, cx } from '@emotion/css';
 import { PanelProps } from '@grafana/data';
 import { Alert, Button, Icon, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
@@ -461,6 +461,47 @@ export const StatsColumnPanel = ({
   const interactiveResize = option(options.enableInteractiveResize, true);
   const autoScaleFontSize = option(options.autoScaleFontSize, true);
 
+  const emptyContainerRef = useRef<HTMLDivElement>(null);
+  const hiddenBehavior = option(options.allColumnsHiddenBehavior, 'alert');
+  const hiddenTitle = options.allColumnsHiddenTitle || 'No data available';
+  const hiddenMessage = options.allColumnsHiddenMessage !== undefined ? options.allColumnsHiddenMessage : 'All columns are currently hidden.';
+  const hiddenSeverity = option(options.allColumnsHiddenSeverity, 'info');
+
+  useLayoutEffect(() => {
+    const el = emptyContainerRef.current;
+    if (!el) {
+      return;
+    }
+    const gridItem = el.closest<HTMLElement>('.react-grid-item');
+    const panelContainer = el.closest<HTMLElement>('.panel-container');
+
+    if (visibleColumns.length === 0 && hiddenBehavior === 'hide') {
+      if (gridItem) {
+        gridItem.style.setProperty('display', 'none', 'important');
+      }
+      if (panelContainer) {
+        panelContainer.style.setProperty('display', 'none', 'important');
+      }
+    } else {
+      if (gridItem) {
+        gridItem.style.removeProperty('display');
+      }
+      if (panelContainer) {
+        panelContainer.style.removeProperty('display');
+      }
+    }
+
+    return () => {
+      if (gridItem) {
+        gridItem.style.removeProperty('display');
+      }
+      if (panelContainer) {
+        panelContainer.style.removeProperty('display');
+      }
+    };
+  }, [visibleColumns.length, hiddenBehavior]);
+
+
   const fittingColumns = Math.max(
     1,
     Math.floor((Math.max(width, minColumnWidth) + columnGap) / (minColumnWidth + columnGap))
@@ -588,9 +629,45 @@ export const StatsColumnPanel = ({
     );
   }
 
-  if (visibleColumns.length === 0) {
+    if (visibleColumns.length === 0) {
+    if (hiddenBehavior === 'hide') {
+      return <div ref={emptyContainerRef} style={{ display: 'none' }} />;
+    }
+
+    if (hiddenBehavior === 'custom') {
+      const renderedTitle = replaceVariables(hiddenTitle);
+      const renderedMsg = replaceVariables(hiddenMessage);
+
+      if (hiddenSeverity === 'plain') {
+        return (
+          <div ref={emptyContainerRef} className={styles.empty}>
+            <div style={{ textAlign: 'center', padding: '16px' }}>
+              {renderedTitle && (
+                <div style={{ fontWeight: 600, fontSize: '15px', color: theme.colors.text.primary, marginBottom: 4 }}>
+                  {renderedTitle}
+                </div>
+              )}
+              {renderedMsg && (
+                <div style={{ fontSize: '13px', color: theme.colors.text.secondary }}>
+                  {renderedMsg}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <div ref={emptyContainerRef} className={styles.empty}>
+          <Alert title={renderedTitle} severity={hiddenSeverity === 'warning' ? 'warning' : 'info'}>
+            {renderedMsg}
+          </Alert>
+        </div>
+      );
+    }
+
     return (
-      <div className={styles.empty}>
+      <div ref={emptyContainerRef} className={styles.empty}>
         <Alert title="All columns are currently hidden" severity="info">
           No columns matched the active variable, field, or viewport visibility conditions.
         </Alert>
