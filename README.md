@@ -4,28 +4,13 @@
 
 ## Why This Plugin Exists
 
-On a standard Grafana dashboard, arranging native Stat and Text panels in thematic vertical columns (for example, `Subject 1`, `Subject 2`, `Subject 3` or `Single Well` vs. `Well Group`) breaks down on smartphone viewports because Grafana's grid flows left-to-right row-by-row, interleaving unrelated items (`1a → 2a → 3a → 1b → 2b...`):
-
-```text
-Desktop View (Desired & Preserved)        Smartphone View (With Stats Column Panel)
-┌──────────────┐  ┌──────────────┐        ┌──────────────────────────┐
-│  Subject 1   │  │  Subject 2   │        │        Subject 1         │
-├──────────────┤  ├──────────────┤        ├──────────────────────────┤
-│      1a      │  │      2a      │        │            1a            │
-├──────────────┤  ├──────────────┤   ──►  ├──────────────────────────┤
-│      1b      │  │      2b      │        │            1b            │
-├──────────────┤  ├──────────────┤        ├──────────────────────────┤
-│      1c      │  │      2c      │        │        Subject 2         │
-└──────────────┘  └──────────────┘        ├──────────────────────────┤
-                                          │            2a            │
-                                          ├──────────────────────────┤
-                                          │            2b            │
-                                          └──────────────────────────┘
-```
+On a standard Grafana dashboard, arranging native Stat and Text panels in thematic vertical columns (for example, **Column 1: Node Performance** and **Column 2: Power & Capacity**) breaks down on mobile viewports because Grafana's grid flows left-to-right row-by-row, interleaving items from different columns.
 
 **Stats Column Panel** "staples" each vertical column together inside a single responsive container:
 - **Desktop view (`> breakpoint`):** Displays columns side-by-side (`1..N` columns) with customizable column width ratios.
-- **Smartphone / narrow view (`<= breakpoint`):** Stacks each entire column vertically from top to bottom (`Column 1` items in order, followed by `Column 2` items in order) so thematic groupings and section headings are never torn apart.
+  - *Column 1:* `Node Telemetry` → `CPU Load` → `Memory Usage` → `Uptime`
+  - *Column 2:* `Power & Capacity` → `Active Power (kW)` → `Daily Energy (kWh)` → `Capacity Allocation (Pie Chart)`
+- **Smartphone / narrow view (`<= breakpoint`):** Stacks each entire column vertically from top to bottom (`Column 1` items in order, followed by `Column 2` items in order) so thematic groupings and section headings stay together.
 
 ---
 
@@ -43,14 +28,14 @@ Desktop View (Desired & Preserved)        Smartphone View (With Stats Column Pan
 - **Full Stat Box Capabilities:**
   - **Value Calculations:** `Last (not null)`, `Last`, `First (not null)`, `First`, `Min`, `Max`, `Mean`, `Sum`, `Count`, and `Selected row` (match row by `$variable` or fallback row index).
   - **Multi-Query Support:** Bind each Stat box or Pie slice to a specific query `refId` (`A`, `B`, `C`, etc.) and field name, or auto-select the first numeric/value column.
-  - **Auto-Parse SQL Value + Unit Strings:** Automatically parses SQL strings like `'22000.00 m³'` into numeric `22000` (so thresholds and German/English number formatting work) while preserving the `m³` unit suffix.
+  - **Auto-Parse SQL Value + Unit Strings:** Automatically parses SQL strings like `'12500.50 kWh'` into numeric `12500.5` (so thresholds and German/English number formatting work) while preserving the `kWh` unit suffix.
   - **Thresholds & Color Modes:** Base color + ordered threshold rules (`>=`, `>`, `<=`, `<`, `=`) with `Value text`, `Solid background`, `Gradient background`, or `None` color modes.
   - **Value Mappings:** Exact value, numeric range (`from..to`), and special matches (`null`, `NaN`, `empty`, `true`, `false`) with custom display text and optional color override.
   - **Info Tooltips `(i)`:** Optional hover tooltip icon next to any card title.
 - **Built-in Pie & Donut Charts:**
   - Add a **Pie / Donut Chart** block inside any column with multiple slices bound to different queries/fields, custom colors, `%` / `Value` / `Name` labels inside slices, and a bottom or right legend.
 - **Conditional Visibility & Viewport Filtering:**
-  - Show or hide entire **Columns** or individual **Stat boxes / Headings / Pie charts** based on **Grafana dashboard variables** (e.g. `$view_mode != 'single_only'`) or **query field values** (`=`, `!=`, `>`, `>=`, `<`, `<=`, `contains`, `regex`, `isEmpty`, `isNotEmpty`).
+  - Show or hide entire **Columns** or individual **Stat boxes / Headings / Pie charts** based on **Grafana dashboard variables** (e.g. `$view_mode != 'compact'`) or **query field values** (`=`, `!=`, `>`, `>=`, `<`, `<=`, `contains`, `regex`, `isEmpty`, `isNotEmpty`).
   - Set viewport visibility per column or item (`All screens`, `Desktop only`, or `Mobile only`).
 
 ---
@@ -99,7 +84,7 @@ http://localhost:3000/d/stats-column-panel-examples/stats-column-panel-examples
 
 - Anonymous Admin access is enabled by default for local testing (or sign in with `admin` / `admin`).
 - Resize your browser window below `768px` (or open DevTools Device Toolbar) to see the columns stack cleanly from top to bottom without interleaving.
-- Switch the **` Number Style`** variable at the top of the demo dashboard to compare `10.000,56 (German)` vs `10,000.56 (English)` vs `10000.56` vs `10000,56`.
+- Switch the **`Number Style`** variable at the top of the demo dashboard to compare `10.000,56 (German)` vs `10,000.56 (English)` vs `10000.56` vs `10000,56`.
 
 ---
 
@@ -156,7 +141,7 @@ In the right-hand panel options sidebar:
   - **Default decimals:** Default decimal places (`0`–`6`).
 
 ### 3. Build Columns and Items (`Columns & Items` Section)
-- Click **Load Water Well Template** to populate a complete two-column water monitoring layout, or click **Add Column** to start from scratch.
+- Click **Add Column** to create a vertical column, or load the starter template.
 - For each **Column**, you can configure:
   - **Optional top column header** and alignment (`Left`, `Center`, `Right`).
   - **Column width ratio (flex weight):** e.g. `1` for equal columns, or `1.5` to make a column wider on desktop.
@@ -164,11 +149,11 @@ In the right-hand panel options sidebar:
 - Inside any column, use the bottom toolbar to add:
   - **`+ Stat Box`**:
     - Set **Title**, **Info tooltip `(i)`**, **Query RefId (`A`, `B`, ...)**, **Field / column** (leave empty for automatic first numeric/value column), and **Calculation** (`Last (not null)`, `Mean`, `Sum`, `Selected row`, etc.).
-    - Set **Unit** (e.g. `m³`, `m ü. NHN`, `%`), **Number format override**, **Decimals override**, **No value text** (e.g. `0 m³`), **Color mode**, **Thresholds**, and **Value Mappings**.
+    - Set **Unit** (e.g. `kWh`, `kW`, `°C`, `%`), **Number format override**, **Decimals override**, **No value text** (e.g. `0 kWh`), **Color mode**, **Thresholds**, and **Value Mappings**.
   - **`+ Heading`**:
-    - Adds an inline section header anywhere in the column (e.g. `Single Well` or `Well Group`) with customizable alignment, color, font size, and optional divider line.
+    - Adds an inline section header anywhere in the column (e.g. `Node Telemetry` or `Cluster Quota`) with customizable alignment, color, font size, and optional divider line.
   - **`+ Pie Chart`**:
-    - Adds a **Pie** or **Donut** chart card inside the column. Add slices and bind each slice to a `Query RefId` + `Field` (such as `LB02`, `Remaining Quota`, `LB01`), pick slice colors, choose label content (`%`, `Value`, `Name`, `% + Value`, `Name + %`), and select legend placement (`Bottom`, `Right`, `Hidden`).
+    - Adds a **Pie** or **Donut** chart card inside the column. Add slices and bind each slice to a `Query RefId` + `Field` (such as `Node-A`, `Node-B`, `Available Capacity`), pick slice colors, choose label content (`%`, `Value`, `Name`, `% + Value`, `Name + %`), and select legend placement (`Bottom`, `Right`, `Hidden`).
 
 ### 4. Resize Individual Elements
 You can resize any card in two ways:
