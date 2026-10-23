@@ -154,5 +154,6 @@ export interface StatsColumnOptions {
   cardBorder: 'none' | 'subtle' | 'strong';
   cardRadius: 'small' | 'medium' | 'large';
   enableInteractiveResize?: boolean;
+  autoScaleFontSize?: boolean;
   columns: StatsColumnDefinition[];
 }

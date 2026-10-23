@@ -149,6 +149,13 @@ export const plugin = new PanelPlugin<StatsColumnOptions>(StatsColumnPanel).setP
       settings: { min: 0 },
     })
     .addBooleanSwitch({
+      path: 'autoScaleFontSize',
+      name: 'Auto-scale font size to fit resolution',
+      category: ['Layout & Typography'],
+      description: 'Automatically scales number and unit font sizes based on resolution and column width so text stays on one line and never wraps or gets cut off.',
+      defaultValue: true,
+    })
+    .addBooleanSwitch({
       path: 'enableInteractiveResize',
       name: 'Enable drag-to-resize on items',
       category: ['Layout & Typography'],

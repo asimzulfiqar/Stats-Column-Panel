@@ -67,7 +67,7 @@ const getStyles = (theme: ReturnType<typeof useTheme2>) => ({
     justify-content: space-between;
     min-width: 0;
     overflow: hidden;
-    padding: ${theme.spacing(1.5, 2)};
+    padding: ${theme.spacing(1.25, 1.5)};
     position: relative;
     transition: border-color 0.15s ease;
     &:hover .resize-grip {
@@ -100,17 +100,23 @@ const getStyles = (theme: ReturnType<typeof useTheme2>) => ({
     align-items: baseline;
     display: flex;
     flex: 1;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 0.22em;
-    line-height: 1.1;
-    margin: ${theme.spacing(1, 0, 0.5)};
+    line-height: 1.15;
+    margin: ${theme.spacing(0.75, 0, 0.5)};
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
   `,
   statNumber: css`
     font-weight: ${theme.typography.fontWeightMedium};
     letter-spacing: -0.02em;
-    word-break: break-word;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   `,
   statUnit: css`
+    flex-shrink: 0;
     font-size: 0.58em;
     font-weight: ${theme.typography.fontWeightMedium};
     white-space: nowrap;
@@ -137,19 +143,21 @@ const getStyles = (theme: ReturnType<typeof useTheme2>) => ({
     width: 100%;
   `,
   pieLegend: css`
-    align-items: flex-start;
+    align-items: center;
     display: flex;
-    flex-direction: column;
-    gap: ${theme.spacing(0.75)};
-    margin-top: ${theme.spacing(1.5)};
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: ${theme.spacing(0.5, 1)};
+    justify-content: center;
+    margin-top: ${theme.spacing(1)};
     width: 100%;
   `,
   pieLegendItem: css`
     align-items: center;
     color: ${theme.colors.text.primary};
     display: flex;
-    font-size: 13px;
-    gap: ${theme.spacing(1)};
+    font-size: 11px;
+    gap: ${theme.spacing(0.5)};
     line-height: 1.2;
   `,
   pieLegendSwatch: css`
@@ -283,11 +291,12 @@ interface PieCardContentProps {
   item: StatColumnItem;
   slices: ResolvedPieSlice[];
   effectiveHeight: number;
+  availableWidthPx?: number;
   theme: ReturnType<typeof useTheme2>;
   styles: ReturnType<typeof getStyles>;
 }
 
-const PieCardContent = ({ item, slices, effectiveHeight, theme, styles }: PieCardContentProps) => {
+const PieCardContent = ({ item, slices, effectiveHeight, availableWidthPx, theme, styles }: PieCardContentProps) => {
   if (slices.length === 0) {
     return <div className={styles.pieEmpty}>{item.noValueText || 'No pie chart data'}</div>;
   }
@@ -298,7 +307,17 @@ const PieCardContent = ({ item, slices, effectiveHeight, theme, styles }: PieCar
   const labelR = isDonut ? (outerR + innerR) / 2 : outerR * 0.6;
   const displayMode = item.pieDisplayLabels ?? 'percent';
   const showLegend = item.pieShowLegend ?? true;
-  const pieDiameter = item.pieSize || Math.max(120, Math.min(360, effectiveHeight - (showLegend ? 85 : 30)));
+  const pieDiameter =
+    item.pieSize ||
+    Math.max(
+      80,
+      Math.min(
+        360,
+        availableWidthPx && availableWidthPx > 0
+          ? Math.min(availableWidthPx - 10, effectiveHeight - (showLegend ? 65 : 25))
+          : effectiveHeight - (showLegend ? 85 : 30)
+      )
+    );
 
   return (
     <div className={styles.pieContainer}>
@@ -412,6 +431,7 @@ export const StatsColumnPanel = ({
   const radiusPx = { small: 4, medium: 8, large: 14 }[option(options.cardRadius, 'medium')];
   const borderWidth = { none: 0, subtle: 1, strong: 2 }[option(options.cardBorder, 'subtle')];
   const interactiveResize = option(options.enableInteractiveResize, true);
+  const autoScaleFontSize = option(options.autoScaleFontSize, true);
 
   const fittingColumns = Math.max(
     1,
@@ -551,6 +571,10 @@ export const StatsColumnPanel = ({
   }
 
   const activeColumnCount = Math.max(1, Math.min(visibleColumns.length, maxColumns, fittingColumns));
+  const estimatedColumnWidthPx = Math.max(
+    100,
+    Math.floor((width - (activeColumnCount - 1) * columnGap) / activeColumnCount)
+  );
 
   const gridTemplateColumns =
     activeColumnCount === 1
@@ -650,6 +674,22 @@ export const StatsColumnPanel = ({
                   ? 100
                   : configuredWidthPct;
 
+              const cardContentWidthPx = Math.max(
+                80,
+                Math.floor((estimatedColumnWidthPx * (effectiveWidthPct / 100)) - (estimatedColumnWidthPx < 220 ? 16 : 24))
+              );
+
+              const baseTitleFont = item.titleFontSize || titleFontSize;
+              const effectiveTitleFontSize =
+                autoScaleFontSize && cardContentWidthPx < 220
+                  ? Math.max(11, Math.min(baseTitleFont, Math.floor(cardContentWidthPx / 14)))
+                  : baseTitleFont;
+
+              const effectiveTimestampFontSize =
+                autoScaleFontSize && cardContentWidthPx < 220
+                  ? Math.max(9, Math.min(timestampFontSize, 10))
+                  : timestampFontSize;
+
               if (item.kind === 'heading') {
                 const sizeMultiplier = item.headingSize === 'sm' ? 0.75 : item.headingSize === 'md' ? 0.9 : 1;
                 const effectiveHeadingHeight = isBeingResized
@@ -732,19 +772,13 @@ export const StatsColumnPanel = ({
                         )}
                       </div>
                     )}
-                    <PieCardContent
-                      item={item}
-                      slices={pieSlices}
-                      effectiveHeight={effectivePieHeight}
-                      theme={theme}
-                      styles={styles}
-                    />
+                    <PieCardContent item={item} slices={pieSlices} effectiveHeight={effectivePieHeight} availableWidthPx={cardContentWidthPx} theme={theme} styles={styles} />
                     {pieTimestampText && (
                       <div
                         className={styles.timestampFooter}
                         style={{
                           color: theme.colors.text.secondary,
-                          fontSize: `${timestampFontSize}px`,
+                          fontSize: `${effectiveTimestampFontSize}px`,
                           textAlign: valueAlign,
                         }}
                       >
@@ -806,11 +840,18 @@ export const StatsColumnPanel = ({
                 ? 'rgba(255, 255, 255, 0.85)'
                 : theme.colors.text.secondary;
               const isLongWarningMessage = !formatted.unitText && formatted.valueText.length > 18;
-              const baseValueFont = item.valueFontSize || defaultValueFontSize;
-              const itemValueFontSize = isLongWarningMessage
-                ? Math.max(16, Math.round(baseValueFont * 0.45))
-                : baseValueFont;
-              const effectiveTitleFontSize = item.titleFontSize || titleFontSize;
+              const configuredValueFont = item.valueFontSize || defaultValueFontSize;
+
+              let itemValueFontSize = configuredValueFont;
+              if (isLongWarningMessage) {
+                itemValueFontSize = Math.max(14, Math.round(configuredValueFont * 0.45));
+              } else if (autoScaleFontSize) {
+                const valueChars = formatted.valueText.length;
+                const unitChars = formatted.unitText ? replaceVariables(formatted.unitText).length : 0;
+                const requiredEm = valueChars * 0.58 + (unitChars > 0 ? 0.22 + unitChars * 0.35 : 0);
+                const maxFittingFont = Math.floor(cardContentWidthPx / Math.max(1, requiredEm));
+                itemValueFontSize = Math.max(16, Math.min(configuredValueFont, maxFittingFont));
+              }
               const effectiveStatHeight = isBeingResized
                 ? activeResize.minHeight
                 : item.minHeight || cardMinHeight;
