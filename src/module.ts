@@ -91,6 +91,41 @@ export const plugin = new PanelPlugin<StatsColumnOptions>(StatsColumnPanel).setP
       category: ['Formatting & Stat Defaults'],
       defaultValue: '-',
     })
+    .addBooleanSwitch({
+      path: 'defaultShowTimestamp',
+      name: 'Show "Last updated" timestamp by default',
+      category: ['Formatting & Stat Defaults'],
+      description: 'Displays a freshness timestamp at the bottom of each card (can also be enabled or disabled per card).',
+      defaultValue: false,
+    })
+    .addTextInput({
+      path: 'defaultTimestampPrefix',
+      name: 'Default timestamp prefix',
+      category: ['Formatting & Stat Defaults'],
+      description: 'Prefix shown before the formatted timestamp (e.g. "Last updated:" or "Stand:").',
+      defaultValue: 'Last updated:',
+    })
+    .addSelect({
+      path: 'defaultTimestampFormat',
+      name: 'Default timestamp format',
+      category: ['Formatting & Stat Defaults'],
+      defaultValue: 'DD.MM.YYYY HH:mm:ss',
+      settings: {
+        options: [
+          { label: 'DD.MM.YYYY HH:mm:ss (23.10.2026 10:39:18)', value: 'DD.MM.YYYY HH:mm:ss' },
+          { label: 'DD.MM.YYYY HH:mm (23.10.2026 10:39)', value: 'DD.MM.YYYY HH:mm' },
+          { label: 'YYYY-MM-DD HH:mm:ss (2026-10-23 10:39:18)', value: 'YYYY-MM-DD HH:mm:ss' },
+          { label: 'HH:mm:ss (10:39:18)', value: 'HH:mm:ss' },
+        ],
+      },
+    })
+    .addNumberInput({
+      path: 'timestampFontSize',
+      name: 'Timestamp font size (px)',
+      category: ['Formatting & Stat Defaults'],
+      defaultValue: 12,
+      settings: { min: 10, max: 24 },
+    })
     .addCustomEditor({
       id: 'selectorField',
       path: 'selectorField',

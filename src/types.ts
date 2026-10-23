@@ -1,5 +1,11 @@
 export type NumberFormatStyle = 'de-grouped' | 'en-grouped' | 'en-plain' | 'de-plain';
 
+export type TimestampFormat =
+  | 'DD.MM.YYYY HH:mm:ss'
+  | 'DD.MM.YYYY HH:mm'
+  | 'YYYY-MM-DD HH:mm:ss'
+  | 'HH:mm:ss';
+
 export type StatCalculation =
   | 'lastNotNull'
   | 'last'
@@ -88,6 +94,10 @@ export interface StatColumnItem {
   thresholds?: StatThreshold[];
   valueMappings?: StatValueMapping[];
   noValueText?: string;
+  showTimestamp?: 'inherit' | 'show' | 'hide';
+  timestampField?: string;
+  timestampPrefix?: string;
+  timestampFormat?: 'inherit' | TimestampFormat;
   minHeight?: number;
   widthPercent?: number;
   titleFontSize?: number;
@@ -118,6 +128,10 @@ export interface StatsColumnOptions {
   defaultColorMode: StatColorMode;
   defaultBaseColor: string;
   defaultNoValueText: string;
+  defaultShowTimestamp?: boolean;
+  defaultTimestampPrefix?: string;
+  defaultTimestampFormat?: TimestampFormat;
+  timestampFontSize?: number;
   selectorField: string;
   selectorValue: string;
   rowIndex: number;

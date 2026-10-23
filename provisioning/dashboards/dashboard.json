@@ -57,7 +57,10 @@
                 "field": "total_energy_kwh",
                 "unit": "kWh",
                 "decimals": 0,
-                "baseColor": "green"
+                "baseColor": "green",
+                "showTimestamp": "show",
+                "timestampPrefix": "Last updated:",
+                "timestampFormat": "DD.MM.YYYY HH:mm:ss"
               },
               {
                 "id": "grid-voltage",
@@ -66,7 +69,10 @@
                 "field": "grid_voltage_v",
                 "unit": "V",
                 "decimals": 0,
-                "baseColor": "super-light-blue"
+                "baseColor": "super-light-blue",
+                "showTimestamp": "show",
+                "timestampPrefix": "Last updated:",
+                "timestampFormat": "DD.MM.YYYY HH:mm:ss"
               },
               {
                 "id": "heading-node-telemetry",
@@ -183,7 +189,7 @@
           "datasource": { "type": "grafana-testdata-datasource", "uid": "trlxrdZVk" },
           "refId": "A",
           "scenarioId": "raw_frame",
-          "rawFrameContent": "[{\"schema\":{\"fields\":[{\"name\":\"total_energy_kwh\",\"type\":\"number\"},{\"name\":\"grid_voltage_v\",\"type\":\"number\"},{\"name\":\"usage_12h_kwh\",\"type\":\"number\"},{\"name\":\"usage_24h_kwh\",\"type\":\"number\"},{\"name\":\"node_capacity_kwh\",\"type\":\"number\"},{\"name\":\"cluster_capacity_kwh\",\"type\":\"number\"},{\"name\":\"annual_usage_kwh\",\"type\":\"number\"},{\"name\":\"utilization_pct\",\"type\":\"number\"},{\"name\":\"node_b_usage\",\"type\":\"number\"},{\"name\":\"available_capacity\",\"type\":\"number\"},{\"name\":\"node_a_usage\",\"type\":\"number\"}]},\"data\":{\"values\":[[9655],[230],[140],[310],[22000],[36000],[9655],[43.9],[14760],[11520],[9720]]}}]"
+          "rawFrameContent": "[{\"schema\":{\"fields\":[{\"name\":\"Time\",\"type\":\"time\"},{\"name\":\"total_energy_kwh\",\"type\":\"number\"},{\"name\":\"grid_voltage_v\",\"type\":\"number\"},{\"name\":\"usage_12h_kwh\",\"type\":\"number\"},{\"name\":\"usage_24h_kwh\",\"type\":\"number\"},{\"name\":\"node_capacity_kwh\",\"type\":\"number\"},{\"name\":\"cluster_capacity_kwh\",\"type\":\"number\"},{\"name\":\"annual_usage_kwh\",\"type\":\"number\"},{\"name\":\"utilization_pct\",\"type\":\"number\"},{\"name\":\"node_b_usage\",\"type\":\"number\"},{\"name\":\"available_capacity\",\"type\":\"number\"},{\"name\":\"node_a_usage\",\"type\":\"number\"}]},\"data\":{\"values\":[[1792744758000],[9655],[230],[140],[310],[22000],[36000],[9655],[43.9],[14760],[11520],[9720]]}}]"
         }
       ]
     },

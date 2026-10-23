@@ -7,6 +7,7 @@ import {
   StatsColumnOptions,
   StatThreshold,
   StatValueMapping,
+  TimestampFormat,
   ViewportVisibility,
   VisibilityRule,
 } from './types';
@@ -176,6 +177,40 @@ export function reduceFieldValues(
   }
 }
 
+export function resolveRowIndexForCalculation(
+  frame: DataFrame,
+  field: Field,
+  calculation: StatCalculation,
+  options: Pick<StatsColumnOptions, 'selectorField' | 'selectorValue' | 'rowIndex'>,
+  replaceVariables: (value: string) => string
+): number {
+  if (frame.length === 0) {
+    return 0;
+  }
+  if (calculation === 'rowSelector') {
+    return selectRowIndex(frame, options, replaceVariables);
+  }
+  if (calculation === 'first') {
+    return 0;
+  }
+  if (calculation === 'firstNotNull') {
+    for (let i = 0; i < frame.length; i++) {
+      const val = field.values[i];
+      if (!isNullOrEmpty(val) && !(typeof val === 'number' && Number.isNaN(val))) {
+        return i;
+      }
+    }
+    return 0;
+  }
+  for (let i = frame.length - 1; i >= 0; i--) {
+    const val = field.values[i];
+    if (!isNullOrEmpty(val) && !(typeof val === 'number' && Number.isNaN(val))) {
+      return i;
+    }
+  }
+  return frame.length - 1;
+}
+
 export function calculateFieldValue(
   series: DataFrame[],
   fieldName: string | undefined,
@@ -183,15 +218,148 @@ export function calculateFieldValue(
   calculation: StatCalculation,
   options: Pick<StatsColumnOptions, 'selectorField' | 'selectorValue' | 'rowIndex'>,
   replaceVariables: (value: string) => string
-): { rawValue: unknown; field?: Field } {
+): { rawValue: unknown; field?: Field; frame?: DataFrame; rowIndex?: number } {
   const { frame, field } = findField(series, fieldName, refId);
   if (!frame || !field || frame.length === 0) {
-    return { rawValue: undefined, field };
+    return { rawValue: undefined, field, frame };
   }
   return {
     rawValue: reduceFieldValues(frame, field, calculation, options, replaceVariables),
     field,
+    frame,
+    rowIndex: resolveRowIndexForCalculation(frame, field, calculation, options, replaceVariables),
   };
+}
+
+export function formatTimestampByStyle(
+  rawTime: unknown,
+  format: TimestampFormat = 'DD.MM.YYYY HH:mm:ss',
+  useUtc = false
+): string {
+  if (isNullOrEmpty(rawTime)) {
+    return '';
+  }
+
+  let dateObj: Date | undefined;
+  if (rawTime instanceof Date) {
+    dateObj = rawTime;
+  } else if (typeof rawTime === 'number' && Number.isFinite(rawTime)) {
+    const ms = rawTime > 0 && rawTime < 1e11 ? rawTime * 1000 : rawTime;
+    dateObj = new Date(ms);
+  } else {
+    const str = String(rawTime).trim();
+    if (/^\d+(\.\d+)?$/.test(str)) {
+      const num = Number(str);
+      const ms = num > 0 && num < 1e11 ? num * 1000 : num;
+      dateObj = new Date(ms);
+    } else {
+      const parsed = Date.parse(str);
+      if (!Number.isNaN(parsed)) {
+        dateObj = new Date(parsed);
+      }
+    }
+  }
+
+  if (!dateObj || Number.isNaN(dateObj.getTime())) {
+    return String(rawTime).trim();
+  }
+
+  const pad2 = (n: number) => String(n).padStart(2, '0');
+  const year = useUtc ? dateObj.getUTCFullYear() : dateObj.getFullYear();
+  const month = pad2((useUtc ? dateObj.getUTCMonth() : dateObj.getMonth()) + 1);
+  const day = pad2(useUtc ? dateObj.getUTCDate() : dateObj.getDate());
+  const hours = pad2(useUtc ? dateObj.getUTCHours() : dateObj.getHours());
+  const minutes = pad2(useUtc ? dateObj.getUTCMinutes() : dateObj.getMinutes());
+  const seconds = pad2(useUtc ? dateObj.getUTCSeconds() : dateObj.getSeconds());
+
+  switch (format) {
+    case 'DD.MM.YYYY HH:mm':
+      return `${day}.${month}.${year} ${hours}:${minutes}`;
+    case 'YYYY-MM-DD HH:mm:ss':
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    case 'HH:mm:ss':
+      return `${hours}:${minutes}:${seconds}`;
+    case 'DD.MM.YYYY HH:mm:ss':
+    default:
+      return `${day}.${month}.${year} ${hours}:${minutes}:${seconds}`;
+  }
+}
+
+export function resolveItemTimestamp(
+  series: DataFrame[],
+  item: StatColumnItem,
+  matchedFrame: DataFrame | undefined,
+  matchedRowIndex: number | undefined,
+  options: StatsColumnOptions,
+  replaceVariables: (value: string) => string
+): string {
+  const showMode = item.showTimestamp ?? 'inherit';
+  const shouldShow =
+    showMode === 'show' || (showMode === 'inherit' && Boolean(options.defaultShowTimestamp));
+  if (!shouldShow) {
+    return '';
+  }
+
+  const targetFrame = matchedFrame ?? findFrame(series, item.refId);
+  if (!targetFrame || targetFrame.length === 0) {
+    return '';
+  }
+
+  const customTimeFieldName = item.timestampField?.trim();
+  let timeField: Field | undefined;
+
+  if (customTimeFieldName) {
+    timeField = targetFrame.fields.find(
+      (f) => f.name === customTimeFieldName || f.config?.displayName === customTimeFieldName
+    );
+    if (!timeField) {
+      const found = findField(series, customTimeFieldName, item.refId);
+      timeField = found.field;
+    }
+  } else {
+    timeField =
+      targetFrame.fields.find((f) => f.type === FieldType.time) ??
+      targetFrame.fields.find((f) =>
+        ['time', 'timestamp', 'last_updated', 'updated_at', 'zeit', 'datum'].includes(f.name.toLowerCase())
+      );
+  }
+
+  if (!timeField || timeField.values.length === 0) {
+    return '';
+  }
+
+  const rowIdx =
+    matchedRowIndex !== undefined && matchedRowIndex >= 0 && matchedRowIndex < timeField.values.length
+      ? matchedRowIndex
+      : timeField.values.length - 1;
+
+  let rawTime = timeField.values[rowIdx];
+  if (isNullOrEmpty(rawTime)) {
+    for (let i = timeField.values.length - 1; i >= 0; i--) {
+      if (!isNullOrEmpty(timeField.values[i])) {
+        rawTime = timeField.values[i];
+        break;
+      }
+    }
+  }
+
+  const format: TimestampFormat =
+    item.timestampFormat && item.timestampFormat !== 'inherit'
+      ? item.timestampFormat
+      : options.defaultTimestampFormat || 'DD.MM.YYYY HH:mm:ss';
+
+  const formattedTime = formatTimestampByStyle(rawTime, format);
+  if (!formattedTime) {
+    return '';
+  }
+
+  const rawPrefix =
+    item.timestampPrefix !== undefined
+      ? item.timestampPrefix
+      : options.defaultTimestampPrefix ?? 'Last updated:';
+  const prefix = replaceVariables(rawPrefix).trim();
+
+  return prefix ? `${prefix} ${formattedTime}` : formattedTime;
 }
 
 export function formatNumberByStyle(value: number, style: NumberFormatStyle, decimals?: number): string {

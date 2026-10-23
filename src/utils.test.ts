@@ -3,9 +3,11 @@ import {
   calculateFieldValue,
   formatNumberByStyle,
   formatStatItem,
+  formatTimestampByStyle,
   isRuleVisible,
   isViewportVisible,
   matchValueMapping,
+  resolveItemTimestamp,
   resolvePieSlices,
   resolveStatColor,
 } from './utils';
@@ -234,6 +236,49 @@ describe('Stats Column Panel utilities', () => {
       expect(isViewportVisible('desktopOnly', false)).toBe(true);
       expect(isViewportVisible('desktopOnly', true)).toBe(false);
       expect(isViewportVisible('mobileOnly', true)).toBe(true);
+    });
+  });
+
+  describe('formatTimestampByStyle and resolveItemTimestamp', () => {
+    it('formats timestamps in DD.MM.YYYY HH:mm:ss and resolves freshness footer', () => {
+      const tsMs = Date.UTC(2026, 9, 23, 14, 5, 9);
+      expect(formatTimestampByStyle(tsMs, 'DD.MM.YYYY HH:mm:ss', true)).toBe('23.10.2026 14:05:09');
+      expect(formatTimestampByStyle(tsMs, 'DD.MM.YYYY HH:mm', true)).toBe('23.10.2026 14:05');
+      expect(formatTimestampByStyle(tsMs, 'YYYY-MM-DD HH:mm:ss', true)).toBe('2026-10-23 14:05:09');
+      expect(formatTimestampByStyle(tsMs, 'HH:mm:ss', true)).toBe('14:05:09');
+
+      const tsFrame = toDataFrame({
+        refId: 'A',
+        fields: [
+          { name: 'Time', type: FieldType.time, values: ['2026-10-23T08:15:30Z', '2026-10-23T10:39:18Z'] },
+          { name: 'total_energy_kwh', type: FieldType.number, values: [9600, 9655] },
+        ],
+      });
+
+      const shownItem: StatColumnItem = {
+        id: 'energy',
+        kind: 'stat',
+        title: 'Total Energy Reading',
+        field: 'total_energy_kwh',
+        showTimestamp: 'show',
+        timestampPrefix: 'Last updated:',
+        timestampFormat: 'DD.MM.YYYY HH:mm:ss',
+      };
+
+      const footer = resolveItemTimestamp([tsFrame], shownItem, tsFrame, 1, defaultOptions, (v) => v);
+      expect(footer).toMatch(/^Last updated: \d{2}\.\d{2}\.2026 \d{2}:\d{2}:18$/);
+
+      const hiddenItem: StatColumnItem = { ...shownItem, showTimestamp: 'hide' };
+      expect(
+        resolveItemTimestamp(
+          [tsFrame],
+          hiddenItem,
+          tsFrame,
+          1,
+          { ...defaultOptions, defaultShowTimestamp: true },
+          (v) => v
+        )
+      ).toBe('');
     });
   });
 });

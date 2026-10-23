@@ -10,6 +10,7 @@ import {
   isRuleVisible,
   isViewportVisible,
   ResolvedPieSlice,
+  resolveItemTimestamp,
   resolvePieSlices,
   resolveThemeColor,
 } from '../utils';
@@ -112,6 +113,14 @@ const getStyles = (theme: ReturnType<typeof useTheme2>) => ({
   statUnit: css`
     font-size: 0.58em;
     font-weight: ${theme.typography.fontWeightMedium};
+    white-space: nowrap;
+  `,
+  timestampFooter: css`
+    line-height: 1.25;
+    margin-top: ${theme.spacing(0.5)};
+    opacity: 0.85;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
   `,
   pieContainer: css`
@@ -398,6 +407,7 @@ export const StatsColumnPanel = ({
   const titleFontSize = Math.max(11, option(options.titleFontSize, 15));
   const defaultValueFontSize = Math.max(18, option(options.valueFontSize, 48));
   const headingFontSize = Math.max(14, option(options.headingFontSize, 26));
+  const timestampFontSize = Math.max(10, option(options.timestampFontSize, 12));
   const valueAlign = option(options.valueAlign, 'center');
   const radiusPx = { small: 4, medium: 8, large: 14 }[option(options.cardRadius, 'medium')];
   const borderWidth = { none: 0, subtle: 1, strong: 2 }[option(options.cardBorder, 'subtle')];
@@ -518,11 +528,11 @@ export const StatsColumnPanel = ({
             Add columns and stat cards in the panel options, or start with a ready-made responsive column template.
           </Alert>
           <div className={styles.emptyActions}>
-            <Button icon="columns" onClick={() => applyTemplate('waterMonitoring')}>
-              Load Water Monitoring template (2 columns)
+            <Button icon="columns" onClick={() => applyTemplate('telemetryOverview')}>
+              Load Telemetry Overview template (2 columns)
             </Button>
-            <Button variant="secondary" icon="apps" onClick={() => applyTemplate('threeSubjects')}>
-              Load 3-Subject Column template
+            <Button variant="secondary" icon="apps" onClick={() => applyTemplate('threeColumns')}>
+              Load 3-Column Infrastructure template
             </Button>
           </div>
         </div>
@@ -671,6 +681,14 @@ export const StatsColumnPanel = ({
 
               if (item.kind === 'pie') {
                 const pieSlices = resolvePieSlices(item, data.series, options, replaceVariables);
+                const pieTimestampText = resolveItemTimestamp(
+                  data.series,
+                  item,
+                  undefined,
+                  undefined,
+                  options,
+                  replaceVariables
+                );
                 const defaultPieHeight = Math.max(cardMinHeight * 2, 260);
                 const effectivePieHeight = isBeingResized
                   ? activeResize.minHeight
@@ -721,6 +739,18 @@ export const StatsColumnPanel = ({
                       theme={theme}
                       styles={styles}
                     />
+                    {pieTimestampText && (
+                      <div
+                        className={styles.timestampFooter}
+                        style={{
+                          color: theme.colors.text.secondary,
+                          fontSize: `${timestampFontSize}px`,
+                          textAlign: valueAlign,
+                        }}
+                      >
+                        {pieTimestampText}
+                      </div>
+                    )}
                     {renderResizeHandles(
                       column.id,
                       item,
@@ -733,7 +763,7 @@ export const StatsColumnPanel = ({
               }
 
               const calculation = item.calculation || option(options.defaultCalculation, 'lastNotNull');
-              const { rawValue, field } = calculateFieldValue(
+              const { rawValue, field, frame, rowIndex } = calculateFieldValue(
                 data.series,
                 item.field,
                 item.refId,
@@ -742,6 +772,14 @@ export const StatsColumnPanel = ({
                 replaceVariables
               );
               const formatted = formatStatItem(rawValue, field, item, options);
+              const timestampText = resolveItemTimestamp(
+                data.series,
+                item,
+                frame,
+                rowIndex,
+                options,
+                replaceVariables
+              );
               const resolvedColor = resolveThemeColor(formatted.color, theme);
               const colorMode: StatColorMode =
                 item.colorMode && item.colorMode !== 'inherit'
@@ -764,6 +802,9 @@ export const StatsColumnPanel = ({
                     : theme.colors.text.primary;
 
               const titleColor = isBgSolid ? 'rgba(255, 255, 255, 0.9)' : theme.colors.text.primary;
+              const timestampColor = isBgSolid
+                ? 'rgba(255, 255, 255, 0.85)'
+                : theme.colors.text.secondary;
               const isLongWarningMessage = !formatted.unitText && formatted.valueText.length > 18;
               const baseValueFont = item.valueFontSize || defaultValueFontSize;
               const itemValueFontSize = isLongWarningMessage
@@ -818,6 +859,19 @@ export const StatsColumnPanel = ({
                       <span className={styles.statUnit}>{replaceVariables(formatted.unitText)}</span>
                     )}
                   </div>
+
+                  {timestampText && (
+                    <div
+                      className={styles.timestampFooter}
+                      style={{
+                        color: timestampColor,
+                        fontSize: `${timestampFontSize}px`,
+                        textAlign: valueAlign,
+                      }}
+                    >
+                      {timestampText}
+                    </div>
+                  )}
 
                   {renderResizeHandles(
                     column.id,

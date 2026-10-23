@@ -16,6 +16,7 @@ import {
   StatThreshold,
   StatValueMapping,
   ThresholdOperator,
+  TimestampFormat,
   ViewportVisibility,
   VisibilityOperator,
   VisibilityRule,
@@ -121,6 +122,20 @@ const colorModeOptions: Array<{ label: string; value: 'inherit' | StatColorMode 
   { label: 'Solid background color', value: 'background' },
   { label: 'Gradient background color', value: 'background-gradient' },
   { label: 'Neutral (no color)', value: 'none' },
+];
+
+const showTimestampOptions: Array<{ label: string; value: 'inherit' | 'show' | 'hide' }> = [
+  { label: 'Inherit panel default', value: 'inherit' },
+  { label: 'Show timestamp (Last updated)', value: 'show' },
+  { label: 'Hide timestamp', value: 'hide' },
+];
+
+const timestampFormatOptions: Array<{ label: string; value: 'inherit' | TimestampFormat }> = [
+  { label: 'Inherit panel default', value: 'inherit' },
+  { label: 'DD.MM.YYYY HH:mm:ss', value: 'DD.MM.YYYY HH:mm:ss' },
+  { label: 'DD.MM.YYYY HH:mm', value: 'DD.MM.YYYY HH:mm' },
+  { label: 'YYYY-MM-DD HH:mm:ss', value: 'YYYY-MM-DD HH:mm:ss' },
+  { label: 'HH:mm:ss', value: 'HH:mm:ss' },
 ];
 
 const thresholdOperatorOptions: Array<{ label: string; value: ThresholdOperator }> = [
@@ -1097,6 +1112,85 @@ export const ColumnsEditor = ({
                                 </Button>
                               </div>
                             </>
+                          )}
+
+                          {item.kind !== 'heading' && (
+                            <div
+                              style={{
+                                border: '1px solid rgba(204, 204, 220, 0.2)',
+                                borderRadius: 4,
+                                padding: 8,
+                                marginTop: 8,
+                                marginBottom: 8,
+                              }}
+                            >
+                              <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6 }}>
+                                Freshness Timestamp (Last updated)
+                              </div>
+                              <Field
+                                label="Show timestamp"
+                                description="Show or hide the measurement timestamp at the bottom of this card."
+                              >
+                                <Combobox
+                                  options={showTimestampOptions}
+                                  value={item.showTimestamp || 'inherit'}
+                                  onChange={(sel) =>
+                                    updateItem(colIndex, itemIndex, {
+                                      showTimestamp: (sel?.value as 'inherit' | 'show' | 'hide') || 'inherit',
+                                    })
+                                  }
+                                />
+                              </Field>
+                              {item.showTimestamp !== 'hide' && (
+                                <>
+                                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                                    <Field label="Prefix text" description="Default: Last updated:">
+                                      <Input
+                                        value={item.timestampPrefix ?? ''}
+                                        placeholder="Inherit (Last updated:)"
+                                        onChange={(e) =>
+                                          updateItem(colIndex, itemIndex, {
+                                            timestampPrefix:
+                                              e.currentTarget.value === '' ? undefined : e.currentTarget.value,
+                                          })
+                                        }
+                                      />
+                                    </Field>
+                                    <Field label="Timestamp format">
+                                      <Combobox
+                                        options={timestampFormatOptions}
+                                        value={item.timestampFormat || 'inherit'}
+                                        onChange={(sel) =>
+                                          updateItem(colIndex, itemIndex, {
+                                            timestampFormat:
+                                              (sel?.value as 'inherit' | TimestampFormat) || 'inherit',
+                                          })
+                                        }
+                                      />
+                                    </Field>
+                                  </div>
+                                  <Field
+                                    label="Timestamp field (optional)"
+                                    description="Leave blank to automatically use the query's Time column."
+                                  >
+                                    <Combobox
+                                      isClearable
+                                      options={Array.from(
+                                        new Set(
+                                          [...allFields.map((f) => f.value), item.timestampField].filter(
+                                            Boolean
+                                          ) as string[]
+                                        )
+                                      ).map((f) => ({ label: f, value: f }))}
+                                      value={item.timestampField ?? ''}
+                                      onChange={(sel) =>
+                                        updateItem(colIndex, itemIndex, { timestampField: sel?.value ?? '' })
+                                      }
+                                    />
+                                  </Field>
+                                </>
+                              )}
+                            </div>
                           )}
 
                           <div

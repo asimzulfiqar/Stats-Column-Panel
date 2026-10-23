@@ -31,6 +31,7 @@ On a standard Grafana dashboard, arranging native Stat and Text panels in themat
   - **Auto-Parse SQL Value + Unit Strings:** Automatically parses SQL strings like `'12500.50 kWh'` into numeric `12500.5` (so thresholds and German/English number formatting work) while preserving the `kWh` unit suffix.
   - **Thresholds & Color Modes:** Base color + ordered threshold rules (`>=`, `>`, `<=`, `<`, `=`) with `Value text`, `Solid background`, `Gradient background`, or `None` color modes.
   - **Value Mappings:** Exact value, numeric range (`from..to`), and special matches (`null`, `NaN`, `empty`, `true`, `false`) with custom display text and optional color override.
+  - **Freshness Timestamp (`Last updated: DD.MM.YYYY HH:mm:ss`):** Enable or disable a timestamp footer globally or per individual card to display when the measurement was last recorded (`DD.MM.YYYY HH:mm:ss`, `DD.MM.YYYY HH:mm`, `YYYY-MM-DD HH:mm:ss`, or `HH:mm:ss`). Automatically reads the query's `Time` column (or a custom timestamp field).
   - **Info Tooltips `(i)`:** Optional hover tooltip icon next to any card title.
 - **Built-in Pie & Donut Charts:**
   - Add a **Pie / Donut Chart** block inside any column with multiple slices bound to different queries/fields, custom colors, `%` / `Value` / `Name` labels inside slices, and a bottom or right legend.
