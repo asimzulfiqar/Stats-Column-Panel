@@ -111,8 +111,6 @@ const getStyles = (theme: ReturnType<typeof useTheme2>) => ({
   statNumber: css`
     font-weight: ${theme.typography.fontWeightMedium};
     letter-spacing: -0.02em;
-    overflow: hidden;
-    text-overflow: ellipsis;
     white-space: nowrap;
   `,
   statUnit: css`
@@ -407,6 +405,36 @@ interface ActiveResizeState {
   widthPercent: number;
 }
 
+function estimateTextEmWidth(valueText: string, unitText?: string): number {
+  let em = 0;
+  for (let i = 0; i < valueText.length; i++) {
+    const ch = valueText[i];
+    if (ch >= '0' && ch <= '9') {
+      em += 0.64;
+    } else if (ch === '.' || ch === ',' || ch === ':' || ch === ' ') {
+      em += 0.32;
+    } else if (ch === '-' || ch === '+') {
+      em += 0.40;
+    } else {
+      em += 0.60;
+    }
+  }
+  if (unitText) {
+    em += 0.25;
+    for (let i = 0; i < unitText.length; i++) {
+      const ch = unitText[i];
+      if (ch === 'W' || ch === 'M' || ch === 'm') {
+        em += 0.50;
+      } else if (ch === ' ' || ch === '.' || ch === '³' || ch === '²') {
+        em += 0.25;
+      } else {
+        em += 0.36;
+      }
+    }
+  }
+  return em * 1.08;
+}
+
 export const StatsColumnPanel = ({
   options,
   data,
@@ -570,11 +598,11 @@ export const StatsColumnPanel = ({
     );
   }
 
+  const wrapperPaddingPx = 16;
   const activeColumnCount = Math.max(1, Math.min(visibleColumns.length, maxColumns, fittingColumns));
-  const estimatedColumnWidthPx = Math.max(
-    100,
-    Math.floor((width - (activeColumnCount - 1) * columnGap) / activeColumnCount)
-  );
+  const totalGaps = (activeColumnCount - 1) * columnGap;
+  const gridAvailableWidth = Math.max(100, width - wrapperPaddingPx - totalGaps);
+  const columnWidthPx = Math.floor(gridAvailableWidth / activeColumnCount);
 
   const gridTemplateColumns =
     activeColumnCount === 1
@@ -674,9 +702,10 @@ export const StatsColumnPanel = ({
                   ? 100
                   : configuredWidthPct;
 
+              const cardHorizontalChrome = 32;
               const cardContentWidthPx = Math.max(
-                80,
-                Math.floor((estimatedColumnWidthPx * (effectiveWidthPct / 100)) - (estimatedColumnWidthPx < 220 ? 16 : 24))
+                60,
+                Math.floor((columnWidthPx * (effectiveWidthPct / 100)) - cardHorizontalChrome)
               );
 
               const baseTitleFont = item.titleFontSize || titleFontSize;
@@ -846,11 +875,12 @@ export const StatsColumnPanel = ({
               if (isLongWarningMessage) {
                 itemValueFontSize = Math.max(14, Math.round(configuredValueFont * 0.45));
               } else if (autoScaleFontSize) {
-                const valueChars = formatted.valueText.length;
-                const unitChars = formatted.unitText ? replaceVariables(formatted.unitText).length : 0;
-                const requiredEm = valueChars * 0.58 + (unitChars > 0 ? 0.22 + unitChars * 0.35 : 0);
+                const requiredEm = estimateTextEmWidth(
+                  formatted.valueText,
+                  formatted.unitText ? replaceVariables(formatted.unitText) : undefined
+                );
                 const maxFittingFont = Math.floor(cardContentWidthPx / Math.max(1, requiredEm));
-                itemValueFontSize = Math.max(16, Math.min(configuredValueFont, maxFittingFont));
+                itemValueFontSize = Math.max(14, Math.min(configuredValueFont, maxFittingFont));
               }
               const effectiveStatHeight = isBeingResized
                 ? activeResize.minHeight
