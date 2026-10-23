@@ -2,7 +2,6 @@ import fs from 'fs';
 import process from 'process';
 import os from 'os';
 import path from 'path';
-import { glob } from 'glob';
 import { SOURCE_DIR } from './constants.ts';
 
 export function isWSL() {
@@ -21,8 +20,8 @@ export function isWSL() {
   }
 }
 
-function loadJson(path: string) {
-  const rawJson = fs.readFileSync(path, 'utf8');
+function loadJson(filePath: string) {
+  const rawJson = fs.readFileSync(filePath, 'utf8');
   return JSON.parse(rawJson);
 }
 
@@ -43,26 +42,14 @@ export function hasReadme() {
   return fs.existsSync(path.resolve(process.cwd(), SOURCE_DIR, 'README.md'));
 }
 
-// Support bundling nested plugins by finding all plugin.json files in src directory
-// then checking for a sibling module.[jt]sx? file.
-export async function getEntries() {
-  const pluginsJson = await glob('**/src/**/plugin.json', { absolute: true });
-
-  const plugins = await Promise.all(
-    pluginsJson.map((pluginJson) => {
-      const folder = path.dirname(pluginJson);
-      return glob(`${folder}/module.{ts,tsx,js,jsx}`, { absolute: true });
-    })
-  );
-
-  return plugins.reduce<Record<string, string>>((result, modules) => {
-    return modules.reduce((innerResult, module) => {
-      const pluginPath = path.dirname(module);
-      const pluginName = path.relative(process.cwd(), pluginPath).replace(/src\/?/i, '');
-      const entryName = pluginName === '' ? 'module' : `${pluginName}/module`;
-
-      innerResult[entryName] = module;
-      return innerResult;
-    }, result);
-  }, {});
+export async function getEntries(): Promise<Record<string, string>> {
+  const srcDir = path.resolve(process.cwd(), SOURCE_DIR);
+  const candidates = ['module.ts', 'module.tsx', 'module.js', 'module.jsx'];
+  for (const candidate of candidates) {
+    const fullPath = path.join(srcDir, candidate);
+    if (fs.existsSync(fullPath)) {
+      return { module: fullPath };
+    }
+  }
+  return { module: path.join(srcDir, 'module.ts') };
 }

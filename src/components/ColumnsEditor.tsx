@@ -47,7 +47,7 @@ const newPieItem = (): StatColumnItem => ({
   id: makeId('pie'),
   kind: 'pie',
   title: '',
-  unit: 'm³',
+  unit: 'kWh',
   decimals: 0,
   pieType: 'pie',
   pieDisplayLabels: 'percent',
@@ -182,11 +182,11 @@ const VisibilityRuleEditor = ({ label, rule, onChange }: VisibilityEditorProps) 
           </Field>
           <Field
             label={current.source === 'variable' ? 'Variable name' : 'Field name'}
-            description={current.source === 'variable' ? 'Example: $well_mode or device_type' : 'Field name in query data'}
+            description={current.source === 'variable' ? 'Example: $view_mode or device_type' : 'Field name in query data'}
           >
             <Input
               value={current.target}
-              placeholder={current.source === 'variable' ? '$well_mode' : 'status'}
+              placeholder={current.source === 'variable' ? '$view_mode' : 'status'}
               onChange={(e) => patch({ target: e.currentTarget.value })}
             />
           </Field>
@@ -201,7 +201,7 @@ const VisibilityRuleEditor = ({ label, rule, onChange }: VisibilityEditorProps) 
             <Field label="Expected value" description="Supports dashboard variables.">
               <Input
                 value={current.value ?? ''}
-                placeholder="single"
+                placeholder="compact"
                 onChange={(e) => patch({ value: e.currentTarget.value })}
               />
             </Field>
@@ -295,8 +295,8 @@ export const ColumnsEditor = ({
         <Combobox
           isClearable
           options={[
-            { label: 'Water Monitoring (2 columns + Pie chart + headings)', value: 'waterMonitoring' },
-            { label: '3-Subject Columns (Subject 1 / 2 / 3)', value: 'threeSubjects' },
+            { label: 'Telemetry Overview (2 columns + Pie chart + headings)', value: 'telemetryOverview' },
+            { label: '3-Column Infrastructure Overview', value: 'threeColumns' },
           ]}
           onChange={(selected) => {
             if (selected?.value && columnTemplates[selected.value]) {
@@ -401,7 +401,7 @@ export const ColumnsEditor = ({
                 <Field label="Column top heading (optional)" description="Shown at the top of this column. Leave empty if headings are placed inline.">
                   <Input
                     value={col.title ?? ''}
-                    placeholder="e.g. Single Well or Subject 1"
+                    placeholder="e.g. Node Telemetry or Cluster Summary"
                     onChange={(e) => updateColumn(colIndex, { title: e.currentTarget.value })}
                   />
                 </Field>
@@ -592,7 +592,7 @@ export const ColumnsEditor = ({
                               <Field label="Info tooltip (optional)">
                                 <Input
                                   value={item.tooltip ?? ''}
-                                  placeholder="e.g. Consumption per well vs quota"
+                                  placeholder="e.g. Energy distribution across cluster nodes"
                                   onChange={(e) => updateItem(colIndex, itemIndex, { tooltip: e.currentTarget.value })}
                                 />
                               </Field>
@@ -615,7 +615,7 @@ export const ColumnsEditor = ({
                                   <Combobox
                                     options={[
                                       { label: 'Percentage (41%)', value: 'percent' },
-                                      { label: 'Value (9655 m³)', value: 'value' },
+                                      { label: 'Value (1450 kWh)', value: 'value' },
                                       { label: 'Slice name', value: 'name' },
                                       { label: 'None', value: 'none' },
                                     ]}
@@ -660,8 +660,8 @@ export const ColumnsEditor = ({
                               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                                 <Field label="Tooltip unit">
                                   <Input
-                                    value={item.unit ?? 'm³'}
-                                    placeholder="m³"
+                                    value={item.unit ?? 'kWh'}
+                                    placeholder="kWh"
                                     onChange={(e) => updateItem(colIndex, itemIndex, { unit: e.currentTarget.value })}
                                   />
                                 </Field>
@@ -705,10 +705,10 @@ export const ColumnsEditor = ({
                                     }}
                                   >
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-                                      <Field label="Slice label" description="Leave blank to use series/well_name label.">
+                                      <Field label="Slice label" description="Leave blank to use series or field label.">
                                         <Input
                                           value={slice.label ?? ''}
-                                          placeholder="e.g. LB02 or Remaining Quota"
+                                          placeholder="e.g. Node-A or Available Capacity"
                                           onChange={(e) =>
                                             updatePieSlice(colIndex, itemIndex, sIdx, { label: e.currentTarget.value })
                                           }
@@ -835,10 +835,10 @@ export const ColumnsEditor = ({
                                 />
                               </Field>
 
-                              <Field label="Unit suffix" description="Examples: m³, m ü. NHN, %, bar">
+                              <Field label="Unit suffix" description="Examples: kWh, kW, V, %, °C">
                                 <Input
                                   value={item.unit ?? ''}
-                                  placeholder="m³"
+                                  placeholder="kWh"
                                   onChange={(e) => updateItem(colIndex, itemIndex, { unit: e.currentTarget.value })}
                                 />
                               </Field>

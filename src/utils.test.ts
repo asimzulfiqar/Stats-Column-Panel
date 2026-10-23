@@ -17,7 +17,7 @@ const defaultOptions: StatsColumnOptions = {
   defaultColorMode: 'value',
   defaultBaseColor: 'green',
   defaultNoValueText: '-',
-  selectorField: 'well_id',
+  selectorField: 'node_id',
   selectorValue: '',
   rowIndex: 0,
   maxColumns: 2,
@@ -64,8 +64,8 @@ describe('Stats Column Panel utilities', () => {
     const frame = toDataFrame({
       refId: 'A',
       fields: [
-        { name: 'well_id', type: FieldType.string, values: ['LB01', 'LB02', 'LB03'] },
-        { name: 'quota', type: FieldType.number, values: [100, 250, null] },
+        { name: 'node_id', type: FieldType.string, values: ['Node-A', 'Node-B', 'Node-C'] },
+        { name: 'capacity_kwh', type: FieldType.number, values: [100, 250, null] },
       ],
     });
 
@@ -73,23 +73,23 @@ describe('Stats Column Panel utilities', () => {
       refId: 'B',
       fields: [
         { name: 'Time', type: FieldType.time, values: [1000, 2000] },
-        { name: 'reading-watermeter', type: FieldType.number, values: [9600, 9655] },
+        { name: 'energy_meter_kwh', type: FieldType.number, values: [9600, 9655] },
       ],
     });
 
     it('reduces field values using lastNotNull, min, max, mean, sum, count, and rowSelector', () => {
-      const replace = (val: string) => val.replace('$well', 'LB02');
-      expect(calculateFieldValue([frame], 'quota', 'A', 'lastNotNull', defaultOptions, replace).rawValue).toBe(250);
-      expect(calculateFieldValue([frame], 'quota', 'A', 'last', defaultOptions, replace).rawValue).toBeNull();
-      expect(calculateFieldValue([frame], 'quota', 'A', 'first', defaultOptions, replace).rawValue).toBe(100);
-      expect(calculateFieldValue([frame], 'quota', 'A', 'min', defaultOptions, replace).rawValue).toBe(100);
-      expect(calculateFieldValue([frame], 'quota', 'A', 'max', defaultOptions, replace).rawValue).toBe(250);
-      expect(calculateFieldValue([frame], 'quota', 'A', 'sum', defaultOptions, replace).rawValue).toBe(350);
-      expect(calculateFieldValue([frame], 'quota', 'A', 'mean', defaultOptions, replace).rawValue).toBe(175);
-      expect(calculateFieldValue([frame], 'quota', 'A', 'count', defaultOptions, replace).rawValue).toBe(2);
+      const replace = (val: string) => val.replace('$node', 'Node-B');
+      expect(calculateFieldValue([frame], 'capacity_kwh', 'A', 'lastNotNull', defaultOptions, replace).rawValue).toBe(250);
+      expect(calculateFieldValue([frame], 'capacity_kwh', 'A', 'last', defaultOptions, replace).rawValue).toBeNull();
+      expect(calculateFieldValue([frame], 'capacity_kwh', 'A', 'first', defaultOptions, replace).rawValue).toBe(100);
+      expect(calculateFieldValue([frame], 'capacity_kwh', 'A', 'min', defaultOptions, replace).rawValue).toBe(100);
+      expect(calculateFieldValue([frame], 'capacity_kwh', 'A', 'max', defaultOptions, replace).rawValue).toBe(250);
+      expect(calculateFieldValue([frame], 'capacity_kwh', 'A', 'sum', defaultOptions, replace).rawValue).toBe(350);
+      expect(calculateFieldValue([frame], 'capacity_kwh', 'A', 'mean', defaultOptions, replace).rawValue).toBe(175);
+      expect(calculateFieldValue([frame], 'capacity_kwh', 'A', 'count', defaultOptions, replace).rawValue).toBe(2);
 
-      const selectorOpts = { ...defaultOptions, selectorField: 'well_id', selectorValue: '$well' };
-      expect(calculateFieldValue([frame], 'quota', 'A', 'rowSelector', selectorOpts, replace).rawValue).toBe(250);
+      const selectorOpts = { ...defaultOptions, selectorField: 'node_id', selectorValue: '$node' };
+      expect(calculateFieldValue([frame], 'capacity_kwh', 'A', 'rowSelector', selectorOpts, replace).rawValue).toBe(250);
     });
 
     it('picks the first non-time field automatically when only refId is provided', () => {
@@ -102,7 +102,7 @@ describe('Stats Column Panel utilities', () => {
     const statItem: StatColumnItem = {
       id: 'pct',
       kind: 'stat',
-      title: 'Percentage individual',
+      title: 'Capacity Utilization',
       field: 'pct',
       unit: '%',
       decimals: 1,
@@ -113,8 +113,8 @@ describe('Stats Column Panel utilities', () => {
       ],
       valueMappings: [
         { type: 'special', specialMatch: 'null', text: 'Offline', color: 'gray' },
-        { type: 'special', specialMatch: 'nan', text: 'No quota assigned, percentage cannot be calculated', color: 'gray' },
-        { type: 'range', from: 100, to: 999, text: 'Quota Exceeded', color: 'red' },
+        { type: 'special', specialMatch: 'nan', text: 'Capacity not assigned', color: 'gray' },
+        { type: 'range', from: 100, to: 999, text: 'Capacity Exceeded', color: 'red' },
       ],
     };
 
@@ -135,28 +135,28 @@ describe('Stats Column Panel utilities', () => {
       expect(mappedNull.color).toBe('gray');
 
       const mappedNaN = formatStatItem(Number.NaN, undefined, statItem, defaultOptions);
-      expect(mappedNaN.valueText).toBe('No quota assigned, percentage cannot be calculated');
+      expect(mappedNaN.valueText).toBe('Capacity not assigned');
 
       const sqlNumericWithUnit = formatStatItem(
-        '22000.00 m³',
+        '22000.00 kWh',
         undefined,
-        { id: 'q', kind: 'stat', title: 'Individual Quota', decimals: 2, baseColor: 'green' },
+        { id: 'q', kind: 'stat', title: 'Allocated Node Capacity', decimals: 2, baseColor: 'green' },
         { ...defaultOptions, numberFormat: 'de-grouped' }
       );
       expect(sqlNumericWithUnit.valueText).toBe('22.000,00');
-      expect(sqlNumericWithUnit.unitText).toBe('m³');
+      expect(sqlNumericWithUnit.unitText).toBe('kWh');
 
       const sqlWarning = formatStatItem(
-        '⚠️ no single quota exists',
+        '⚠️ No node capacity configured',
         undefined,
-        { id: 'q', kind: 'stat', title: 'Individual Quota', unit: 'm³', baseColor: 'green' },
+        { id: 'q', kind: 'stat', title: 'Allocated Node Capacity', unit: 'kWh', baseColor: 'green' },
         defaultOptions
       );
-      expect(sqlWarning.valueText).toBe('⚠️ no single quota exists');
+      expect(sqlWarning.valueText).toBe('⚠️ No node capacity configured');
       expect(sqlWarning.unitText).toBe('');
 
       const mappedRange = matchValueMapping(120, statItem.valueMappings);
-      expect(mappedRange?.text).toBe('Quota Exceeded');
+      expect(mappedRange?.text).toBe('Capacity Exceeded');
     });
   });
 
@@ -164,9 +164,9 @@ describe('Stats Column Panel utilities', () => {
     const pieFrame = toDataFrame({
       refId: 'A',
       fields: [
-        { name: 'lb02_consumption', type: FieldType.number, values: [14760] },
-        { name: 'remaining_group_quota', type: FieldType.number, values: [11520] },
-        { name: 'lb01_consumption', type: FieldType.number, values: [9720] },
+        { name: 'node_b_usage', type: FieldType.number, values: [14760] },
+        { name: 'available_capacity', type: FieldType.number, values: [11520] },
+        { name: 'node_a_usage', type: FieldType.number, values: [9720] },
       ],
     });
 
@@ -175,38 +175,38 @@ describe('Stats Column Panel utilities', () => {
         id: 'pie-1',
         kind: 'pie',
         title: '',
-        unit: 'm³',
+        unit: 'kWh',
         decimals: 0,
         pieSort: 'desc',
         pieSlices: [
-          { id: 's1', label: 'LB01', field: 'lb01_consumption', color: 'yellow' },
-          { id: 's2', label: 'LB02', field: 'lb02_consumption', color: 'purple' },
-          { id: 's3', label: 'Remaining Quota', field: 'remaining_group_quota', color: 'green' },
+          { id: 's1', label: 'Node-A', field: 'node_a_usage', color: 'yellow' },
+          { id: 's2', label: 'Node-B', field: 'node_b_usage', color: 'purple' },
+          { id: 's3', label: 'Available Capacity', field: 'available_capacity', color: 'green' },
         ],
       };
 
       const slices = resolvePieSlices(pieItem, [pieFrame], defaultOptions, (v) => v);
       expect(slices).toHaveLength(3);
-      expect(slices[0].label).toBe('LB02');
+      expect(slices[0].label).toBe('Node-B');
       expect(Math.round(slices[0].percent)).toBe(41);
-      expect(slices[1].label).toBe('Remaining Quota');
+      expect(slices[1].label).toBe('Available Capacity');
       expect(Math.round(slices[1].percent)).toBe(32);
-      expect(slices[2].label).toBe('LB01');
+      expect(slices[2].label).toBe('Node-A');
       expect(Math.round(slices[2].percent)).toBe(27);
     });
   });
 
   describe('isRuleVisible and isViewportVisible', () => {
     const frame = toDataFrame({
-      fields: [{ name: 'group_enabled', type: FieldType.string, values: ['true'] }],
+      fields: [{ name: 'cluster_enabled', type: FieldType.string, values: ['true'] }],
     });
-    const vars: Record<string, string> = { '$well_mode': 'group', '$region': 'Bavaria' };
+    const vars: Record<string, string> = { '$view_mode': 'cluster', '$region': 'eu-central' };
     const replace = (input: string) => vars[input] ?? input;
 
     it('evaluates variable, field, and viewport visibility rules', () => {
       expect(
         isRuleVisible(
-          { enabled: true, source: 'variable', target: '$well_mode', operator: 'equals', value: 'group' },
+          { enabled: true, source: 'variable', target: '$view_mode', operator: 'equals', value: 'cluster' },
           [frame],
           defaultOptions,
           replace
@@ -215,7 +215,7 @@ describe('Stats Column Panel utilities', () => {
 
       expect(
         isRuleVisible(
-          { enabled: true, source: 'variable', target: 'well_mode', operator: 'equals', value: 'single' },
+          { enabled: true, source: 'variable', target: 'view_mode', operator: 'equals', value: 'compact' },
           [frame],
           defaultOptions,
           replace
@@ -224,7 +224,7 @@ describe('Stats Column Panel utilities', () => {
 
       expect(
         isRuleVisible(
-          { enabled: true, source: 'field', target: 'group_enabled', operator: 'equals', value: 'true' },
+          { enabled: true, source: 'field', target: 'cluster_enabled', operator: 'equals', value: 'true' },
           [frame],
           defaultOptions,
           replace

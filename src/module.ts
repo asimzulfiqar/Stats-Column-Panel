@@ -14,7 +14,7 @@ export const plugin = new PanelPlugin<StatsColumnOptions>(StatsColumnPanel).setP
       category: ['Columns & Stats'],
       description: 'Configure vertical columns of Stat cards and headings that stay grouped together on mobile and desktop.',
       editor: ColumnsEditor,
-      defaultValue: columnTemplates.waterMonitoring,
+      defaultValue: columnTemplates.telemetryOverview,
     })
     .addSelect({
       path: 'numberFormat',

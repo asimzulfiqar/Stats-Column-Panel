@@ -1,2 +1,3 @@
-// Jest setup provided by Grafana scaffolding
-import './.config/jest-setup';
+if (typeof globalThis.window === 'undefined') {
+  globalThis.window = globalThis;
+}

@@ -10,9 +10,9 @@
         "name": "view_mode",
         "options": [
           { "selected": true, "text": "all", "value": "all" },
-          { "selected": false, "text": "single_only", "value": "single_only" }
+          { "selected": false, "text": "compact", "value": "compact" }
         ],
-        "query": "all,single_only",
+        "query": "all,compact",
         "type": "custom"
       }
     ]
@@ -22,7 +22,7 @@
       "datasource": { "type": "grafana-testdata-datasource", "uid": "trlxrdZVk" },
       "gridPos": { "h": 20, "w": 14, "x": 0, "y": 0 },
       "id": 1,
-      "title": "Water Monitoring – Stapled Responsive Columns + Pie Chart",
+      "title": "Energy & Cluster Telemetry – Stapled Responsive Columns + Pie Chart",
       "type": "asimzulfiqar-statscolumn-panel",
       "options": {
         "numberFormat": "en-plain",
@@ -46,59 +46,59 @@
         "cardRadius": "medium",
         "columns": [
           {
-            "id": "col-single-well",
+            "id": "col-node-telemetry",
             "title": "",
             "titleAlign": "center",
             "items": [
               {
-                "id": "letzter-zaehlerstand",
+                "id": "total-energy",
                 "kind": "stat",
-                "title": "Letzter Zählerstand",
-                "field": "letzter_zaehlerstand",
-                "unit": "m³",
+                "title": "Total Energy Reading",
+                "field": "total_energy_kwh",
+                "unit": "kWh",
                 "decimals": 0,
                 "baseColor": "green"
               },
               {
-                "id": "letzter-pegelstand",
+                "id": "grid-voltage",
                 "kind": "stat",
-                "title": "Letzter Pegelstand",
-                "field": "letzter_pegelstand",
-                "unit": "m ü. NHN",
+                "title": "Grid Voltage",
+                "field": "grid_voltage_v",
+                "unit": "V",
                 "decimals": 0,
                 "baseColor": "super-light-blue"
               },
               {
-                "id": "heading-single-well",
+                "id": "heading-node-telemetry",
                 "kind": "heading",
-                "title": "Single Well",
+                "title": "Node Telemetry",
                 "headingAlign": "center",
                 "headingSize": "lg"
               },
               {
-                "id": "individual-quota",
+                "id": "node-capacity",
                 "kind": "stat",
-                "title": "Individual Quota",
-                "field": "individual_quota",
-                "unit": "m³",
+                "title": "Allocated Node Capacity",
+                "field": "node_capacity_kwh",
+                "unit": "kWh",
                 "decimals": 2,
                 "baseColor": "green"
               },
               {
-                "id": "gesamtentnahme",
+                "id": "annual-usage",
                 "kind": "stat",
-                "title": "Erfolgte Gesamtentnahme laufendes Jahr",
-                "field": "gesamtentnahme_jahr",
-                "unit": "m³",
+                "title": "Cumulative Annual Usage",
+                "field": "annual_usage_kwh",
+                "unit": "kWh",
                 "decimals": 0,
                 "baseColor": "green"
               },
               {
-                "id": "percentage-individual",
+                "id": "utilization-pct",
                 "kind": "stat",
-                "title": "Percentage individual",
-                "tooltip": "Single well Percentage",
-                "field": "percentage_individual",
+                "title": "Capacity Utilization",
+                "tooltip": "Current node utilization percentage",
+                "field": "utilization_pct",
                 "unit": "%",
                 "decimals": 1,
                 "baseColor": "green",
@@ -111,7 +111,7 @@
             ]
           },
           {
-            "id": "col-well-group",
+            "id": "col-cluster-summary",
             "title": "",
             "titleAlign": "center",
             "visibility": {
@@ -119,49 +119,49 @@
               "source": "variable",
               "target": "$view_mode",
               "operator": "notEquals",
-              "value": "single_only"
+              "value": "compact"
             },
             "items": [
               {
-                "id": "entnahme-12h",
+                "id": "usage-12h",
                 "kind": "stat",
-                "title": "Wasserentnahmen letzte 12 Std.",
-                "field": "entnahme_12h",
-                "unit": "m³",
+                "title": "Energy Usage (Last 12h)",
+                "field": "usage_12h_kwh",
+                "unit": "kWh",
                 "decimals": 0,
                 "baseColor": "green"
               },
               {
-                "id": "entnahme-24h",
+                "id": "usage-24h",
                 "kind": "stat",
-                "title": "Wasserentnahmen letzte 24 Std.",
-                "field": "entnahme_24h",
-                "unit": "m³",
+                "title": "Energy Usage (Last 24h)",
+                "field": "usage_24h_kwh",
+                "unit": "kWh",
                 "decimals": 0,
                 "baseColor": "green"
               },
               {
-                "id": "heading-well-group",
+                "id": "heading-cluster",
                 "kind": "heading",
-                "title": "Well Group",
+                "title": "Cluster Summary",
                 "headingAlign": "center",
                 "headingSize": "lg"
               },
               {
-                "id": "group-quota",
+                "id": "cluster-capacity",
                 "kind": "stat",
-                "title": "Group Quota",
-                "field": "group_quota",
-                "unit": "m³",
+                "title": "Cluster Total Capacity",
+                "field": "cluster_capacity_kwh",
+                "unit": "kWh",
                 "decimals": 2,
                 "baseColor": "green"
               },
               {
-                "id": "group-quota-pie",
+                "id": "cluster-pie",
                 "kind": "pie",
                 "title": "",
-                "tooltip": "Consumption per well vs quota",
-                "unit": "m³",
+                "tooltip": "Energy distribution across cluster nodes",
+                "unit": "kWh",
                 "decimals": 0,
                 "pieType": "pie",
                 "pieDisplayLabels": "percent",
@@ -169,9 +169,9 @@
                 "pieShowLegend": true,
                 "minHeight": 272,
                 "pieSlices": [
-                  { "id": "slice-lb02", "label": "LB02", "field": "lb02_consumption", "color": "purple" },
-                  { "id": "slice-rem", "label": "Remaining Quota", "field": "remaining_group_quota", "color": "green" },
-                  { "id": "slice-lb01", "label": "LB01", "field": "lb01_consumption", "color": "yellow" }
+                  { "id": "slice-node-b", "label": "Node-B", "field": "node_b_usage", "color": "purple" },
+                  { "id": "slice-rem", "label": "Available Capacity", "field": "available_capacity", "color": "green" },
+                  { "id": "slice-node-a", "label": "Node-A", "field": "node_a_usage", "color": "yellow" }
                 ]
               }
             ]
@@ -183,7 +183,7 @@
           "datasource": { "type": "grafana-testdata-datasource", "uid": "trlxrdZVk" },
           "refId": "A",
           "scenarioId": "raw_frame",
-          "rawFrameContent": "[{\"schema\":{\"fields\":[{\"name\":\"letzter_zaehlerstand\",\"type\":\"number\"},{\"name\":\"letzter_pegelstand\",\"type\":\"number\"},{\"name\":\"entnahme_12h\",\"type\":\"number\"},{\"name\":\"entnahme_24h\",\"type\":\"number\"},{\"name\":\"individual_quota\",\"type\":\"number\"},{\"name\":\"group_quota\",\"type\":\"number\"},{\"name\":\"gesamtentnahme_jahr\",\"type\":\"number\"},{\"name\":\"percentage_individual\",\"type\":\"number\"},{\"name\":\"lb02_consumption\",\"type\":\"number\"},{\"name\":\"remaining_group_quota\",\"type\":\"number\"},{\"name\":\"lb01_consumption\",\"type\":\"number\"}]},\"data\":{\"values\":[[9655],[268],[0],[0],[22000],[36000],[9655],[43.9],[14760],[11520],[9720]]}}]"
+          "rawFrameContent": "[{\"schema\":{\"fields\":[{\"name\":\"total_energy_kwh\",\"type\":\"number\"},{\"name\":\"grid_voltage_v\",\"type\":\"number\"},{\"name\":\"usage_12h_kwh\",\"type\":\"number\"},{\"name\":\"usage_24h_kwh\",\"type\":\"number\"},{\"name\":\"node_capacity_kwh\",\"type\":\"number\"},{\"name\":\"cluster_capacity_kwh\",\"type\":\"number\"},{\"name\":\"annual_usage_kwh\",\"type\":\"number\"},{\"name\":\"utilization_pct\",\"type\":\"number\"},{\"name\":\"node_b_usage\",\"type\":\"number\"},{\"name\":\"available_capacity\",\"type\":\"number\"},{\"name\":\"node_a_usage\",\"type\":\"number\"}]},\"data\":{\"values\":[[9655],[230],[140],[310],[22000],[36000],[9655],[43.9],[14760],[11520],[9720]]}}]"
         }
       ]
     },
@@ -212,30 +212,30 @@
         "cardRadius": "medium",
         "columns": [
           {
-            "id": "sub-1",
-            "title": "Subject 1",
+            "id": "col-compute",
+            "title": "Compute",
             "titleAlign": "center",
             "items": [
-              { "id": "1a", "kind": "stat", "title": "1a Volume", "field": "v1a", "unit": "m³", "decimals": 2, "baseColor": "green" },
-              { "id": "1b", "kind": "stat", "title": "1b Flow", "field": "v1b", "unit": "l/s", "decimals": 2, "baseColor": "green" }
+              { "id": "cpu-ops", "kind": "stat", "title": "Requests / Sec", "field": "req_sec", "unit": "req/s", "decimals": 2, "baseColor": "green" },
+              { "id": "mem-gb", "kind": "stat", "title": "Memory Used", "field": "mem_gb", "unit": "GB", "decimals": 2, "baseColor": "green" }
             ]
           },
           {
-            "id": "sub-2",
-            "title": "Subject 2",
+            "id": "col-network",
+            "title": "Network",
             "titleAlign": "center",
             "items": [
-              { "id": "2a", "kind": "stat", "title": "2a Pressure", "field": "v2a", "unit": "bar", "decimals": 2, "baseColor": "light-blue" },
-              { "id": "2b", "kind": "stat", "title": "2b Level", "field": "v2b", "unit": "m", "decimals": 1, "baseColor": "light-blue" }
+              { "id": "rx-rate", "kind": "stat", "title": "Inbound Traffic", "field": "rx_gbps", "unit": "Gbps", "decimals": 2, "baseColor": "light-blue" },
+              { "id": "tx-rate", "kind": "stat", "title": "Outbound Traffic", "field": "tx_mbps", "unit": "Mbps", "decimals": 1, "baseColor": "light-blue" }
             ]
           },
           {
-            "id": "sub-3",
-            "title": "Subject 3",
+            "id": "col-env",
+            "title": "Environment",
             "titleAlign": "center",
             "items": [
-              { "id": "3a", "kind": "stat", "title": "3a Quota", "field": "v3a", "unit": "%", "decimals": 1, "baseColor": "yellow" },
-              { "id": "3b", "kind": "stat", "title": "3b Temp", "field": "v3b", "unit": "°C", "decimals": 1, "baseColor": "orange" }
+              { "id": "rack-humidity", "kind": "stat", "title": "Rack Humidity", "field": "humidity_pct", "unit": "%", "decimals": 1, "baseColor": "yellow" },
+              { "id": "rack-temp", "kind": "stat", "title": "Inlet Temp", "field": "temp_c", "unit": "°C", "decimals": 1, "baseColor": "orange" }
             ]
           }
         ]
@@ -245,7 +245,7 @@
           "datasource": { "type": "grafana-testdata-datasource", "uid": "trlxrdZVk" },
           "refId": "A",
           "scenarioId": "raw_frame",
-          "rawFrameContent": "[{\"schema\":{\"fields\":[{\"name\":\"v1a\",\"type\":\"number\"},{\"name\":\"v1b\",\"type\":\"number\"},{\"name\":\"v2a\",\"type\":\"number\"},{\"name\":\"v2b\",\"type\":\"number\"},{\"name\":\"v3a\",\"type\":\"number\"},{\"name\":\"v3b\",\"type\":\"number\"}]},\"data\":{\"values\":[[10000.56],[5.62],[4.85],[128.4],[43.9],[18.5]]}}]"
+          "rawFrameContent": "[{\"schema\":{\"fields\":[{\"name\":\"req_sec\",\"type\":\"number\"},{\"name\":\"mem_gb\",\"type\":\"number\"},{\"name\":\"rx_gbps\",\"type\":\"number\"},{\"name\":\"tx_mbps\",\"type\":\"number\"},{\"name\":\"humidity_pct\",\"type\":\"number\"},{\"name\":\"temp_c\",\"type\":\"number\"}]},\"data\":{\"values\":[[10000.56],[5.62],[4.85],[128.4],[43.9],[18.5]]}}]"
         }
       ]
     }

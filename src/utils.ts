@@ -391,18 +391,13 @@ export function formatStatItem(
 }
 
 function deriveSeriesSliceLabel(frame: DataFrame, field: Field): string {
-  if (field.labels?.well_name) {
-    return field.labels.well_name;
+  const firstLabelValue = field.labels ? Object.values(field.labels)[0] : undefined;
+  if (firstLabelValue) {
+    return firstLabelValue;
   }
   const candidates = [field.config?.displayNameFromDS, field.config?.displayName, frame.name, field.name].filter(
     Boolean
   ) as string[];
-  for (const candidate of candidates) {
-    const wellMatch = candidate.match(/well_name:\s*([^,}]+)/i);
-    if (wellMatch) {
-      return wellMatch[1].trim();
-    }
-  }
   return candidates[0] || 'Series';
 }
 
@@ -414,7 +409,7 @@ export function resolvePieSlices(
 ): ResolvedPieSlice[] {
   const numberStyle: NumberFormatStyle =
     item.numberFormat && item.numberFormat !== 'inherit' ? item.numberFormat : options.numberFormat || 'de-grouped';
-  const unitText = normalizeDisplayUnit(item.unit ?? 'm³');
+  const unitText = normalizeDisplayUnit(item.unit ?? '');
   const defaultCalc = item.calculation || options.defaultCalculation || 'lastNotNull';
   const configuredSlices = item.pieSlices ?? [];
 
@@ -613,73 +608,73 @@ export function resolveThemeColor(color: string, theme: GrafanaTheme2): string {
 }
 
 export const columnTemplates: Record<string, StatsColumnDefinition[]> = {
-  waterMonitoring: [
+  telemetryOverview: [
     {
       id: 'col-left',
       title: '',
       titleAlign: 'center',
       items: [
         {
-          id: 'zaehlerstand',
+          id: 'total-energy',
           kind: 'stat',
-          title: 'Letzter Zählerstand',
-          field: 'letzter_zaehlerstand',
-          unit: 'm³',
+          title: 'Total Energy Reading',
+          field: 'total_energy_kwh',
+          unit: 'kWh',
           decimals: 0,
           baseColor: 'green',
         },
         {
-          id: 'pegelstand',
+          id: 'grid-voltage',
           kind: 'stat',
-          title: 'Letzter Pegelstand',
-          field: 'letzter_pegelstand',
-          unit: 'm ü. NHN',
+          title: 'Grid Voltage',
+          field: 'grid_voltage_v',
+          unit: 'V',
           decimals: 0,
           baseColor: 'super-light-blue',
-          noValueText: '⚠️ No pegelstand value to show.',
+          noValueText: '⚠️ No voltage telemetry available.',
         },
         {
-          id: 'heading-single-well',
+          id: 'heading-single-node',
           kind: 'heading',
-          title: 'Single Well',
+          title: 'Node Telemetry',
           headingAlign: 'center',
           headingSize: 'lg',
         },
         {
-          id: 'individual-quota',
+          id: 'node-capacity',
           kind: 'stat',
-          title: 'Individual Quota',
-          field: 'individual_quota',
-          unit: 'm³',
+          title: 'Allocated Node Capacity',
+          field: 'node_capacity_kwh',
+          unit: 'kWh',
           decimals: 2,
           baseColor: 'green',
-          noValueText: '⚠️ no single quota exists',
+          noValueText: '⚠️ No node capacity configured',
         },
         {
-          id: 'gesamtentnahme',
+          id: 'annual-usage',
           kind: 'stat',
-          title: 'Erfolgte Gesamtentnahme laufendes Jahr',
-          field: 'gesamtentnahme_jahr',
-          unit: 'm³',
+          title: 'Cumulative Annual Usage',
+          field: 'annual_usage_kwh',
+          unit: 'kWh',
           decimals: 0,
           baseColor: 'green',
-          noValueText: '0 m³',
+          noValueText: '0 kWh',
         },
         {
-          id: 'percentage-individual',
+          id: 'utilization-pct',
           kind: 'stat',
-          title: 'Percentage individual',
-          tooltip: 'Single well Percentage',
-          field: 'percentage_individual',
+          title: 'Capacity Utilization',
+          tooltip: 'Current node utilization percentage',
+          field: 'utilization_pct',
           unit: '%',
           decimals: 1,
           baseColor: 'green',
-          noValueText: '⚠️ No quota assigned, percentage cannot be calculated',
+          noValueText: '⚠️ Capacity not assigned',
           valueMappings: [
             {
               type: 'special',
               specialMatch: 'nan',
-              text: 'No quota assigned, percentage cannot be calculated',
+              text: 'Capacity not assigned, utilization cannot be calculated',
               color: 'gray',
             },
           ],
@@ -697,48 +692,48 @@ export const columnTemplates: Record<string, StatsColumnDefinition[]> = {
       titleAlign: 'center',
       items: [
         {
-          id: 'entnahme-12h',
+          id: 'usage-12h',
           kind: 'stat',
-          title: 'Wasserentnahmen letzte 12 Std.',
-          field: 'entnahme_12h',
-          unit: 'm³',
+          title: 'Energy Usage (Last 12h)',
+          field: 'usage_12h_kwh',
+          unit: 'kWh',
           decimals: 0,
           baseColor: 'green',
-          noValueText: '0 m³',
+          noValueText: '0 kWh',
         },
         {
-          id: 'entnahme-24h',
+          id: 'usage-24h',
           kind: 'stat',
-          title: 'Wasserentnahmen letzte 24 Std.',
-          field: 'entnahme_24h',
-          unit: 'm³',
+          title: 'Energy Usage (Last 24h)',
+          field: 'usage_24h_kwh',
+          unit: 'kWh',
           decimals: 0,
           baseColor: 'green',
-          noValueText: '0 m³',
+          noValueText: '0 kWh',
         },
         {
-          id: 'heading-well-group',
+          id: 'heading-cluster',
           kind: 'heading',
-          title: 'Well Group',
+          title: 'Cluster Summary',
           headingAlign: 'center',
           headingSize: 'lg',
         },
         {
-          id: 'group-quota',
+          id: 'cluster-capacity',
           kind: 'stat',
-          title: 'Group Quota',
-          field: 'group_quota',
-          unit: 'm³',
+          title: 'Cluster Total Capacity',
+          field: 'cluster_capacity_kwh',
+          unit: 'kWh',
           decimals: 2,
           baseColor: 'green',
-          noValueText: '⚠️ no group quota exisits.',
+          noValueText: '⚠️ No cluster capacity configured.',
         },
         {
-          id: 'group-quota-pie',
+          id: 'cluster-pie',
           kind: 'pie',
           title: '',
-          tooltip: 'Consumption per well vs quota',
-          unit: 'm³',
+          tooltip: 'Energy distribution across cluster nodes',
+          unit: 'kWh',
           decimals: 0,
           pieType: 'pie',
           pieDisplayLabels: 'percent',
@@ -746,40 +741,40 @@ export const columnTemplates: Record<string, StatsColumnDefinition[]> = {
           pieShowLegend: true,
           minHeight: 272,
           pieSlices: [
-            { id: 'slice-lb02', label: 'LB02', field: 'lb02_consumption', color: 'purple' },
-            { id: 'slice-rem', label: 'Remaining Quota', field: 'remaining_group_quota', color: 'green' },
-            { id: 'slice-lb01', label: 'LB01', field: 'lb01_consumption', color: 'yellow' },
+            { id: 'slice-node-b', label: 'Node-B', field: 'node_b_usage', color: 'purple' },
+            { id: 'slice-rem', label: 'Available Capacity', field: 'available_capacity', color: 'green' },
+            { id: 'slice-node-a', label: 'Node-A', field: 'node_a_usage', color: 'yellow' },
           ],
         },
       ],
     },
   ],
-  threeSubjects: [
+  threeColumns: [
     {
-      id: 'subject-1',
-      title: 'Subject 1',
+      id: 'col-compute',
+      title: 'Compute',
       titleAlign: 'center',
       items: [
-        { id: '1a', kind: 'stat', title: 'Measurement 1a', field: 'metric_1a', unit: 'm³', decimals: 1, baseColor: 'green' },
-        { id: '1b', kind: 'stat', title: 'Measurement 1b', field: 'metric_1b', unit: 'm³', decimals: 1, baseColor: 'green' },
+        { id: 'cpu-load', kind: 'stat', title: 'CPU Load', field: 'cpu_load', unit: '%', decimals: 1, baseColor: 'green' },
+        { id: 'mem-used', kind: 'stat', title: 'Memory Used', field: 'mem_used', unit: 'GB', decimals: 2, baseColor: 'green' },
       ],
     },
     {
-      id: 'subject-2',
-      title: 'Subject 2',
+      id: 'col-network',
+      title: 'Network',
       titleAlign: 'center',
       items: [
-        { id: '2a', kind: 'stat', title: 'Measurement 2a', field: 'metric_2a', unit: 'bar', decimals: 2, baseColor: 'light-blue' },
-        { id: '2b', kind: 'stat', title: 'Measurement 2b', field: 'metric_2b', unit: 'bar', decimals: 2, baseColor: 'light-blue' },
+        { id: 'rx-rate', kind: 'stat', title: 'Inbound Traffic', field: 'rx_mbps', unit: 'Mbps', decimals: 2, baseColor: 'light-blue' },
+        { id: 'tx-rate', kind: 'stat', title: 'Outbound Traffic', field: 'tx_mbps', unit: 'Mbps', decimals: 1, baseColor: 'light-blue' },
       ],
     },
     {
-      id: 'subject-3',
-      title: 'Subject 3',
+      id: 'col-environment',
+      title: 'Environment',
       titleAlign: 'center',
       items: [
-        { id: '3a', kind: 'stat', title: 'Measurement 3a', field: 'metric_3a', unit: '%', decimals: 1, baseColor: 'yellow' },
-        { id: '3b', kind: 'stat', title: 'Measurement 3b', field: 'metric_3b', unit: '%', decimals: 1, baseColor: 'yellow' },
+        { id: 'rack-humidity', kind: 'stat', title: 'Rack Humidity', field: 'humidity_pct', unit: '%', decimals: 1, baseColor: 'yellow' },
+        { id: 'rack-temp', kind: 'stat', title: 'Inlet Temp', field: 'temp_c', unit: '°C', decimals: 1, baseColor: 'orange' },
       ],
     },
   ],
