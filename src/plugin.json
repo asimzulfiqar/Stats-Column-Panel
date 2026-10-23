@@ -1,0 +1,29 @@
+{
+  "$schema": "https://raw.githubusercontent.com/grafana/grafana/main/docs/sources/developers/plugins/plugin.schema.json",
+  "type": "panel",
+  "name": "Stats Column Panel",
+  "id": "asimzulfiqar-statscolumn-panel",
+  "info": {
+    "keywords": ["stat", "column", "responsive", "mobile", "iot", "water", "thresholds"],
+    "description": "Responsive stapled vertical columns of Stat cards and headings that maintain their column grouping on mobile and desktop.",
+    "author": {
+      "name": "Asim Zulfiqar"
+    },
+    "logos": {
+      "small": "img/logo.svg",
+      "large": "img/logo.svg"
+    },
+    "links": [
+      { "name": "documentation", "url": "https://github.com/asimzulfiqar/stats-column-panel#readme" },
+      { "name": "repository", "url": "https://github.com/asimzulfiqar/stats-column-panel" }
+    ],
+    "screenshots": [],
+    "version": "%VERSION%",
+    "updated": "%TODAY%"
+  },
+  "dependencies": {
+    "grafanaDependency": ">=10.0.0",
+    "plugins": []
+  }
+}
+
