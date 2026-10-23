@@ -467,6 +467,29 @@ export const StatsColumnPanel = ({
   const hiddenMessage = options.allColumnsHiddenMessage !== undefined ? options.allColumnsHiddenMessage : 'All columns are currently hidden.';
   const hiddenSeverity = option(options.allColumnsHiddenSeverity, 'info');
 
+  
+
+
+  const fittingColumns = Math.max(
+    1,
+    Math.floor((Math.max(width, minColumnWidth) + columnGap) / (minColumnWidth + columnGap))
+  );
+  const isMobileViewport = fittingColumns === 1 && maxColumns > 1;
+
+  const visibleColumns = useMemo(() => {
+    const rawColumns = options.columns ?? [];
+    return rawColumns
+      .filter((col) => isViewportVisible(col.viewportVisibility, isMobileViewport))
+      .filter((col) => isRuleVisible(col.visibility, data.series, options, replaceVariables))
+      .map((col) => ({
+        ...col,
+        items: (col.items ?? [])
+          .filter((item) => isViewportVisible(item.viewportVisibility, isMobileViewport))
+          .filter((item) => isRuleVisible(item.visibility, data.series, options, replaceVariables)),
+      }))
+      .filter((col) => col.items.length > 0 || Boolean(col.title?.trim()));
+  }, [options, isMobileViewport, data.series, replaceVariables]);
+
   useLayoutEffect(() => {
     const el = emptyContainerRef.current;
     if (!el) {
@@ -500,27 +523,6 @@ export const StatsColumnPanel = ({
       }
     };
   }, [visibleColumns.length, hiddenBehavior]);
-
-
-  const fittingColumns = Math.max(
-    1,
-    Math.floor((Math.max(width, minColumnWidth) + columnGap) / (minColumnWidth + columnGap))
-  );
-  const isMobileViewport = fittingColumns === 1 && maxColumns > 1;
-
-  const visibleColumns = useMemo(() => {
-    const rawColumns = options.columns ?? [];
-    return rawColumns
-      .filter((col) => isViewportVisible(col.viewportVisibility, isMobileViewport))
-      .filter((col) => isRuleVisible(col.visibility, data.series, options, replaceVariables))
-      .map((col) => ({
-        ...col,
-        items: (col.items ?? [])
-          .filter((item) => isViewportVisible(item.viewportVisibility, isMobileViewport))
-          .filter((item) => isRuleVisible(item.visibility, data.series, options, replaceVariables)),
-      }))
-      .filter((col) => col.items.length > 0 || Boolean(col.title?.trim()));
-  }, [options, isMobileViewport, data.series, replaceVariables]);
 
   const applyTemplate = (templateKey: keyof typeof columnTemplates) => {
     onOptionsChange({
