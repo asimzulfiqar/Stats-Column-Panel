@@ -76,6 +76,12 @@ export interface PieSliceConfig {
   color?: string;
 }
 
+export interface PieSeriesColorRule {
+  id: string;
+  pattern: string;
+  color: string;
+}
+
 export interface StatColumnItem {
   id: string;
   kind: ColumnItemKind;
@@ -108,6 +114,7 @@ export interface StatColumnItem {
   pieSort?: PieSliceSort;
   pieShowLegend?: boolean;
   pieSlices?: PieSliceConfig[];
+  pieSeriesColors?: PieSeriesColorRule[];
   viewportVisibility?: ViewportVisibility;
   visibility?: VisibilityRule;
 }

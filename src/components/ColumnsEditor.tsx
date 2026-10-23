@@ -6,6 +6,7 @@ import {
   NumberFormatStyle,
   PieChartType,
   PieDisplayLabel,
+  PieSeriesColorRule,
   PieSliceConfig,
   PieSliceSort,
   StatCalculation,
@@ -289,6 +290,18 @@ export const ColumnsEditor = ({
     const current = value[colIndex].items[itemIndex].pieSlices ?? [];
     updateItem(colIndex, itemIndex, {
       pieSlices: current.map((s, idx) => (idx === sliceIndex ? { ...s, ...patch } : s)),
+    });
+  };
+
+  const updatePieSeriesColor = (
+    colIndex: number,
+    itemIndex: number,
+    ruleIndex: number,
+    patch: Partial<PieSeriesColorRule>
+  ) => {
+    const current = value[colIndex].items[itemIndex].pieSeriesColors ?? [];
+    updateItem(colIndex, itemIndex, {
+      pieSeriesColors: current.map((r, idx) => (idx === ruleIndex ? { ...r, ...patch } : r)),
     });
   };
 
@@ -801,6 +814,72 @@ export const ColumnsEditor = ({
                                   }
                                 >
                                   Add Pie slice
+                                </Button>
+                              </div>
+
+                              <div style={{ marginTop: 12, marginBottom: 8 }}>
+                                <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 2 }}>
+                                  Series Color Overrides (by Series / Label Name)
+                                </div>
+                                <div style={{ fontSize: 11, color: '#8e8e8e', marginBottom: 6 }}>
+                                  Assign specific colors when a single query produces multiple series (e.g. GROUP BY well_name). Matches exact name or regex pattern.
+                                </div>
+                                {(item.pieSeriesColors ?? []).map((rule, rIdx) => (
+                                  <div
+                                    key={rule.id || rIdx}
+                                    style={{
+                                      display: 'grid',
+                                      gridTemplateColumns: '1fr 1fr auto',
+                                      gap: 6,
+                                      alignItems: 'center',
+                                      marginBottom: 6,
+                                    }}
+                                  >
+                                    <Input
+                                      value={rule.pattern ?? ''}
+                                      placeholder="e.g. LB01 or LB02"
+                                      onChange={(e) =>
+                                        updatePieSeriesColor(colIndex, itemIndex, rIdx, { pattern: e.currentTarget.value })
+                                      }
+                                    />
+                                    <Combobox
+                                      options={colorOptions}
+                                      value={rule.color ?? 'yellow'}
+                                      onChange={(sel) =>
+                                        updatePieSeriesColor(colIndex, itemIndex, rIdx, { color: sel?.value || 'yellow' })
+                                      }
+                                    />
+                                    <Button
+                                      size="sm"
+                                      variant="secondary"
+                                      icon="trash-alt"
+                                      aria-label="Remove series color"
+                                      onClick={() =>
+                                        updateItem(colIndex, itemIndex, {
+                                          pieSeriesColors: (item.pieSeriesColors ?? []).filter((_, idx) => idx !== rIdx),
+                                        })
+                                      }
+                                    />
+                                  </div>
+                                ))}
+                                <Button
+                                  size="sm"
+                                  variant="secondary"
+                                  icon="plus"
+                                  onClick={() =>
+                                    updateItem(colIndex, itemIndex, {
+                                      pieSeriesColors: [
+                                        ...(item.pieSeriesColors ?? []),
+                                        {
+                                          id: makeId('rule'),
+                                          pattern: '',
+                                          color: 'yellow',
+                                        },
+                                      ],
+                                    })
+                                  }
+                                >
+                                  Add Series Color
                                 </Button>
                               </div>
                             </>

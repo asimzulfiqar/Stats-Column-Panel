@@ -580,6 +580,29 @@ export function resolvePieSlices(
   const unitText = normalizeDisplayUnit(item.unit ?? '');
   const defaultCalc = item.calculation || options.defaultCalculation || 'lastNotNull';
   const configuredSlices = item.pieSlices ?? [];
+  const seriesColorRules = item.pieSeriesColors ?? [];
+
+  const resolveSliceColor = (label: string, defaultColor: string): string => {
+    if (seriesColorRules.length > 0) {
+      for (const rule of seriesColorRules) {
+        if (!rule.pattern || !rule.color) {
+          continue;
+        }
+        const pat = rule.pattern.trim();
+        if (pat.toLowerCase() === label.toLowerCase()) {
+          return rule.color;
+        }
+        try {
+          if (new RegExp(pat, 'i').test(label)) {
+            return rule.color;
+          }
+        } catch {
+          // ignore invalid regex
+        }
+      }
+    }
+    return defaultColor;
+  };
 
   const rawSlices: Array<{ id: string; label: string; value: number; color: string }> = [];
   let paletteIdx = 0;
@@ -599,17 +622,19 @@ export function resolvePieSlices(
             .map((field) => ({ frame, field }))
         );
 
-        if (valueFields.length > 1) {
+        if (valueFields.length > 0) {
           for (const { frame, field } of valueFields) {
             const raw = reduceFieldValues(frame, field, calc, options, replaceVariables);
             const num = Number(raw);
             if (Number.isFinite(num) && num > 0) {
               const autoLabel = deriveSeriesSliceLabel(frame, field);
+              const finalLabel = replaceVariables(sliceCfg.label?.trim() ? `${sliceCfg.label} (${autoLabel})` : autoLabel);
+              const baseColor = sliceCfg.color || nextPaletteColor();
               rawSlices.push({
                 id: `${sliceCfg.id}-${autoLabel}`,
-                label: replaceVariables(sliceCfg.label?.trim() ? `${sliceCfg.label} (${autoLabel})` : autoLabel),
+                label: finalLabel,
                 value: num,
-                color: sliceCfg.color || nextPaletteColor(),
+                color: resolveSliceColor(finalLabel, resolveSliceColor(autoLabel, baseColor)),
               });
             }
           }
@@ -623,11 +648,13 @@ export function resolvePieSlices(
         const fallbackLabel =
           sliceCfg.label?.trim() ||
           (field ? deriveSeriesSliceLabel(series[0], field) : trimmedField || trimmedRef || 'Slice');
+        const finalLabel = replaceVariables(fallbackLabel);
+        const baseColor = sliceCfg.color || nextPaletteColor();
         rawSlices.push({
           id: sliceCfg.id,
-          label: replaceVariables(fallbackLabel),
+          label: finalLabel,
           value: num,
-          color: sliceCfg.color || nextPaletteColor(),
+          color: resolveSliceColor(finalLabel, baseColor),
         });
       }
     }
@@ -643,12 +670,12 @@ export function resolvePieSlices(
         const raw = reduceFieldValues(frame, field, defaultCalc, options, replaceVariables);
         const num = Number(raw);
         if (Number.isFinite(num) && num > 0) {
-          const label = deriveSeriesSliceLabel(frame, field);
+          const label = replaceVariables(deriveSeriesSliceLabel(frame, field));
           rawSlices.push({
             id: `${frame.refId || 'f'}-${field.name}`,
-            label: replaceVariables(label),
+            label,
             value: num,
-            color: nextPaletteColor(),
+            color: resolveSliceColor(label, nextPaletteColor()),
           });
         }
       }
