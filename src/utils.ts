@@ -604,6 +604,29 @@ export function resolvePieSlices(
     return defaultColor;
   };
 
+  const defaultPiePalette = [
+    '#B877D9', // purple
+    '#FADE2A', // yellow
+    '#73BF69', // green
+    '#5794F2', // blue
+    '#FF9830', // orange
+    '#8AB8FF', // light-blue
+    '#F2495C', // red
+    '#37B24D', // dark-green
+    '#E599F7', // light-purple
+    '#FA5252', // light-red
+  ];
+
+  const getAutoColorForLabel = (label: string): string => {
+    let hash = 0;
+    for (let i = 0; i < label.length; i++) {
+      hash = (hash << 5) - hash + label.charCodeAt(i);
+      hash |= 0;
+    }
+    const idx = Math.abs(hash) % defaultPiePalette.length;
+    return defaultPiePalette[idx];
+  };
+
   const rawSlices: Array<{ id: string; label: string; value: number; color: string }> = [];
   let paletteIdx = 0;
   const nextPaletteColor = () => defaultPiePalette[paletteIdx++ % defaultPiePalette.length];
@@ -629,12 +652,14 @@ export function resolvePieSlices(
             if (Number.isFinite(num) && num > 0) {
               const autoLabel = deriveSeriesSliceLabel(frame, field);
               const finalLabel = replaceVariables(sliceCfg.label?.trim() ? `${sliceCfg.label} (${autoLabel})` : autoLabel);
-              const baseColor = sliceCfg.color || nextPaletteColor();
+              // If sliceCfg has a specific color AND it's only 1 field, use it.
+              // If this query returned MULTIPLE series/fields, assign separate palette colors per series automatically!
+              const autoColor = valueFields.length > 1 ? nextPaletteColor() : (sliceCfg.color || nextPaletteColor());
               rawSlices.push({
                 id: `${sliceCfg.id}-${autoLabel}`,
                 label: finalLabel,
                 value: num,
-                color: resolveSliceColor(finalLabel, resolveSliceColor(autoLabel, baseColor)),
+                color: resolveSliceColor(finalLabel, resolveSliceColor(autoLabel, autoColor)),
               });
             }
           }
